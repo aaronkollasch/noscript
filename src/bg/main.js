@@ -67,6 +67,19 @@
       }
     }
 
+    if (!ns.contextStore) { // it could have been already retrieved by LifeCycle
+      let contextStoreData = (await Storage.get("sync", "contextStore")).contextStore;
+      if (contextStoreData) {
+        ns.contextStore = new ContextStore(contextStoreData);
+        await ns.contextStore.updateContainers(ns.policy);
+      } else {
+        log("No container data found. Initializing new policies.")
+        ns.contextStore = new ContextStore();
+        await ns.contextStore.updateContainers(ns.policy);
+        await ns.saveContextStore();
+      }
+    }
+
     let {isTorBrowser} = ns.local;
     Sites.onionSecure = isTorBrowser;
 
@@ -164,10 +177,12 @@
       tabId = -1
     }) {
       let policy = ns.policy.dry(true);
+      let contextStore = ns.contextStore.dry(true);
       let seen = tabId !== -1 ? await ns.collectSeen(tabId) : null;
       let xssUserChoices = await XSS.getUserChoices();
       await Messages.send("settings", {
         policy,
+        contextStore,
         seen,
         xssUserChoices,
         local: ns.local,
@@ -225,6 +240,7 @@
   var ns = {
     running: false,
     policy: null,
+    contextStore: null,
     local: null,
     sync: null,
     initializing: null,
@@ -246,9 +262,35 @@
       return !this.isEnforced(request.tabId) || this.policy.can(request.url, capability, this.policyContext(request));
     },
 
+    getPolicy(cookieStoreId){
+      if (
+        ns.contextStore &&
+        ns.contextStore.enabled &&
+        ns.contextStore.policies.hasOwnProperty(cookieStoreId)
+      ) {
+        let currentPolicy = ns.contextStore.policies[cookieStoreId];
+        debug("id", cookieStoreId, "has cookiestore", currentPolicy);
+        if (currentPolicy) return currentPolicy;
+      }
+      debug("default cookiestore", cookieStoreId);
+      return ns.policy;
+    },
+
     computeChildPolicy({url, contextUrl}, sender) {
-      let {tab, frameId} = sender;
-      let policy = ns.policy;
+      let {tab, frameId, cookieStoreId} = sender;
+      let tabId = tab ? tab.id : -1;
+      let topUrl;
+      if (frameId === 0) {
+        topUrl = url;
+      } else if (tab) {
+        if (!tab.url) tab = TabCache.get(tabId);
+        if (tab) topUrl = tab.url;
+      }
+      if (!topUrl) topUrl = url;
+      if (!contextUrl) contextUrl = topUrl;
+
+      if (!cookieStoreId && tab) cookieStoreId = tab.cookieStoreId;
+      let policy = ns.getPolicy(cookieStoreId);
       let {isTorBrowser} = ns.local;
       if (!policy) {
         console.log("Policy is null, initializing: %o, sending fallback.", ns.initializing);
@@ -260,17 +302,6 @@
           isTorBrowser,
         };
       }
-
-      let tabId = tab ? tab.id : -1;
-      let topUrl;
-      if (frameId === 0) {
-        topUrl = url;
-      } else if (tab) {
-        if (!tab.url) tab = TabCache.get(tabId);
-        if (tab) topUrl = tab.url;
-      }
-      if (!topUrl) topUrl = url;
-      if (!contextUrl) contextUrl = topUrl;
 
       if (Sites.isInternal(url) || !ns.isEnforced(tabId)) {
         policy = null;
@@ -337,7 +368,7 @@
         await Storage.set("sync", {
           policy: this.policy.dry()
         });
-        await browser.webRequest.handlerBehaviorChanged()
+        await browser.webRequest.handlerBehaviorChanged();
       }
       return this.policy;
     },
@@ -352,6 +383,16 @@
       if (hilite) search.set("hilite", hilite);
       url.search = search;
       browser.tabs.create({url: url.toString() });
+    },
+
+    async saveContextStore() {
+      if (this.contextStore) {
+        await Storage.set("sync", {
+          contextStore: this.contextStore.dry()
+        });
+        await browser.webRequest.handlerBehaviorChanged();
+      }
+      return this.contextStore;
     },
 
     async save(obj) {
