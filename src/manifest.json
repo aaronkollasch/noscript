@@ -28,7 +28,8 @@
       "webNavigation",
       "webRequest",
       "webRequestBlocking",
-      "<all_urls>"
+      "<all_urls>",
+      "contextualIdentities"
   ],
 
   "background": {
@@ -50,6 +51,7 @@
       "/nscl/common/Sites.js",
       "/nscl/common/Permissions.js",
       "/nscl/common/Policy.js",
+      "/nscl/common/ContextStore.js",
       "/nscl/common/locale.js",
       "/nscl/common/SyntaxChecker.js",
       "/nscl/common/Storage.js",

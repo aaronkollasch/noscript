@@ -98,6 +98,7 @@ var Settings = {
   async update(settings) {
     let {
       policy,
+      contextStore,
       xssUserChoices,
       tabId,
       unrestrictedTab,
@@ -144,8 +145,10 @@ var Settings = {
     }
 
     if (settings.sync === null) {
+      debug("resetting options", settings);
       // user is resetting options
       policy = this.createDefaultDryPolicy();
+      contextStore = new ContextStore().dry();
 
       // overriden defaults when user manually resets options
 
@@ -168,6 +171,13 @@ var Settings = {
     if (policy) {
       ns.policy = new Policy(policy);
       await ns.savePolicy();
+    }
+
+    if (contextStore) {
+      let newContextStore = new ContextStore(contextStore);
+      debug("set contextstore", newContextStore);
+      ns.contextStore = newContextStore
+      await ns.saveContextStore();
     }
 
     if (typeof unrestrictedTab === "boolean") {
@@ -213,6 +223,7 @@ var Settings = {
   export() {
     return JSON.stringify({
       policy: ns.policy.dry(),
+      contextStore: ns.contextStore.dry(),
       local: ns.local,
       sync: ns.sync,
       xssUserChoices: XSS.getUserChoices(),

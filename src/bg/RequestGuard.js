@@ -399,7 +399,6 @@ var RequestGuard = (() => {
       normalizeRequest(request);
       try {
         let redirected = initPendingRequest(request);
-        let {policy} = ns
         let {type} = request;
         if (type in policyTypesMap) {
           let previous = recent.find(request);
@@ -411,8 +410,9 @@ var RequestGuard = (() => {
           recent.add(previous);
 
           let policyType = policyTypesMap[type];
-          let {url, originUrl, documentUrl, tabId} = request;
+          let {url, originUrl, documentUrl, tabId, cookieStoreId} = request;
           let isFetch = "fetch" === policyType;
+          let policy = ns.getPolicy(cookieStoreId);
 
           if ((isFetch || "frame" === policyType) &&
               (((isFetch && (!originUrl ||
@@ -515,12 +515,12 @@ var RequestGuard = (() => {
       let headersModified = false;
 
       pending.headersProcessed = true;
-      let {url, documentUrl, tabId, responseHeaders, type} = request;
+      let {url, documentUrl, tabId, cookieStoreId, responseHeaders, type} = request;
       let isMainFrame = type === "main_frame";
       try {
         let capabilities;
         if (ns.isEnforced(tabId)) {
-          let policy = ns.policy;
+          let policy = ns.getPolicy(cookieStoreId);
           let perms = policy.get(url, documentUrl).perms;
           if (isMainFrame) {
             if (policy.autoAllowTop && perms === policy.DEFAULT) {
@@ -640,9 +640,11 @@ var RequestGuard = (() => {
     return ABORT;
   }
 
-  function injectPolicyScript(details) {
+  async function injectPolicyScript(details) {
+    console.debug("INJECT", details);
     let {url, tabId, frameId} = details;
-    let policy = ns.computeChildPolicy({url}, {tab: {id: tabId}, frameId});
+    let tab = await browser.tabs.get(tabId);
+    let policy = ns.computeChildPolicy({url}, {tab, frameId});
     policy.navigationURL = url;
     let debugStatement = ns.local.debug ? `
       let mark = Date.now() + ":" + Math.random();

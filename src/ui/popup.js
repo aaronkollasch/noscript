@@ -46,6 +46,7 @@ addEventListener("unload", e => {
         : null,
       active: true
     }))[0];
+    let cookieStoreId = tab.cookieStoreId;
     let pageTab = tab;
 
     if (!tab || tab.id === -1) {
@@ -64,6 +65,15 @@ addEventListener("unload", e => {
     } else {
       tabId = tab.id;
     }
+
+    var containerName;
+    try {
+      containerName = (await browser.contextualIdentities.get(cookieStoreId)).name;
+    } catch {
+      containerName = "Default";
+    }
+    debug("container name", containerName, cookieStoreId);
+    document.querySelector("#container-id").textContent = containerName; 
 
     addEventListener("keydown", e => {
       if (e.code === "Enter") {
@@ -249,7 +259,9 @@ addEventListener("unload", e => {
 
     let justDomains = !UI.local.showFullAddresses;
 
-    sitesUI = new UI.Sites(document.getElementById("sites"));
+    let policy = await UI.getPolicy(cookieStoreId);
+    debug("popup policy", policy);
+    sitesUI = new UI.Sites(document.getElementById("sites"), UI.DEF_PRESETS, policy);
 
     sitesUI.onChange = (row) => {
       pendingReload(sitesUI.anyPermissionsChanged());
@@ -262,7 +274,7 @@ addEventListener("unload", e => {
       });
       optionsClosed = true;
     };
-    initSitesUI();
+    await initSitesUI();
     UI.onSettings = initSitesUI;
 
     if (UI.incognito) {
@@ -274,13 +286,13 @@ addEventListener("unload", e => {
       });
     }
 
-    function initSitesUI() {
+    async function initSitesUI() {
       pendingReload(false);
       let {
         typesMap
       } = sitesUI;
       typesMap.clear();
-      let policySites = UI.policy.sites;
+      let policySites = policy.sites;
       let domains = new Map();
       let protocols = new Set();
       function urlToLabel(url) {

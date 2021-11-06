@@ -269,6 +269,17 @@ var LifeCycle = (() => {
         if (changed) {
           await ns.savePolicy();
         }
+        if (ns.contextStore) {
+          changed = false;
+          for (let k of Object.keys(ns.contextStore.policies)){
+            for (let p of ns.contextStore.policies[k].getPresets(presetNames)) {
+              if (callback(p)) changed = true;
+            }
+          }
+          if (changed) {
+            await ns.saveContextStore();
+          }
+        }
       };
 
       let configureNewCap = async (cap, presetNames, capsFilter) => {

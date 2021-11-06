@@ -94,6 +94,12 @@ fieldset:disabled {
 .hide, div.debug {
   display: none;
 }
+#context-store {
+  display: block;
+  margin-top: .5em;
+  min-height: 20em;
+  width: 90%;
+}
 
 body.debug div.debug {
   display: initial;
@@ -105,6 +111,14 @@ body.debug div.debug {
 }
 
 #policy-error {
+  background: red;
+  color: #ff8;
+  padding: 0;
+  margin: 0;
+  font-weight: bold;
+}
+
+#context-store-error {
   background: red;
   color: #ff8;
   padding: 0;
