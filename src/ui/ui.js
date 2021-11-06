@@ -45,6 +45,7 @@ var UI = (() => {
         "/nscl/common/Sites.js",
         "/nscl/common/Permissions.js",
         "/nscl/common/Policy.js",
+        "/nscl/common/ContextStore.js"
       ];
       this.mobile = UA.mobile;
       if (this.mobile) {
@@ -57,7 +58,8 @@ var UI = (() => {
           async settings(m) {
             if (UI.tabId !== m.tabId) return;
             UI.policy = new Policy(m.policy);
-            UI.snapshot = UI.policy.snapshot;
+            UI.contextStore = new ContextStore(m.contextStore);
+            UI.snapshot = UI.policy.snapshot+UI.contextStore.snapshot;
             UI.seen = m.seen;
             UI.unrestrictedTab = m.unrestrictedTab;
             UI.xssUserChoices = m.xssUserChoices;
@@ -86,15 +88,17 @@ var UI = (() => {
       await inited;
 
       this.initialized = true;
-      debug("Imported", Policy);
+      debug("Imported", Policy, ContextStore);
     },
     async pullSettings() {
       Messages.send("broadcastSettings", {tabId: UI.tabId});
     },
-    async updateSettings({policy, xssUserChoices, unrestrictedTab, local, sync, reloadAffected}) {
+    async updateSettings({policy, contextStore, xssUserChoices, unrestrictedTab, local, sync, reloadAffected}) {
       if (policy) policy = policy.dry(true);
+      if (contextStore) contextStore = contextStore.dry(true);
       return await Messages.send("updateSettings", {
         policy,
+        contextStore,
         xssUserChoices,
         unrestrictedTab,
         local,
@@ -114,13 +118,28 @@ var UI = (() => {
     async revokeTemp(reloadAffected = false) {
       let policy = this.policy;
       Policy.hydrate(policy.dry(), policy);
+      let contextStore = this.contextStore
+      ContextStore.hydrate(contextStore.dry(), contextStore)
       if (this.isDirty(true)) {
-        await this.updateSettings({policy, reloadAffected});
+        await this.updateSettings({policy, contextStore, reloadAffected});
+      }
+    },
+
+    async getPolicy(cookieStoreId) {
+      await this.contextStore.updateContainers();
+//       debug("get policy", cookieStoreId, this.policy, this.contextStore);
+      if (this.contextStore.policies.hasOwnProperty(cookieStoreId)) {
+        let currentPolicy = this.contextStore.policies[cookieStoreId];
+        debug("has cookiestore", cookieStoreId, currentPolicy);
+        return currentPolicy;
+      } else {
+        debug("default cookiestore", cookieStoreId);
+        return this.policy;
       }
     },
 
     isDirty(reset = false) {
-      let currentSnapshot = this.policy.snapshot;
+      let currentSnapshot = this.policy.snapshot+this.contextStore.snapshot;
       let dirty = currentSnapshot != this.snapshot;
       if (reset) this.snapshot = currentSnapshot;
       return dirty;
@@ -254,7 +273,7 @@ var UI = (() => {
 
   function fireOnChange(sitesUI, data) {
     if (UI.isDirty(true)) {
-      UI.updateSettings({policy: UI.policy});
+      UI.updateSettings({policy: UI.policy, contextStore: UI.contextStore});
       if (sitesUI.onChange) sitesUI.onChange(data, this);
     }
   }
@@ -327,11 +346,11 @@ var UI = (() => {
   const INCOGNITO_PRESETS = ["DEFAULT", "T_TRUSTED", "CUSTOM"];
 
   UI.Sites = class {
-    constructor(parentNode, presets = DEF_PRESETS) {
+    constructor(parentNode, presets = DEF_PRESETS, policy = null) {
       this.parentNode = parentNode;
-      let policy = UI.policy;
+      this.policy = (policy)? policy : UI.policy;
       this.uiCount =  UI.Sites.count = (UI.Sites.count || 0) + 1;
-      this.sites = policy.sites;
+      this.sites = this.policy.sites;
       this.presets = presets;
       this.customizing = null;
       this.typesMap = new Map();
@@ -454,6 +473,11 @@ var UI = (() => {
 
       this.customize(null);
       this.sitesCount = 0;
+      this.sites = ({
+        trusted: [],
+        untrusted: [],
+        custom: {},
+      })
     }
 
     siteNeeds(site, type) {
@@ -493,8 +517,6 @@ var UI = (() => {
       let tempToggle = preset.parentNode.querySelector("input.temp");
 
       if (ev.type === "change") {
-        let {policy} = UI;
-
         row.permissionsChanged = false;
         if (!row._originalPerms) {
           row._originalPerms = row.perms.clone();
@@ -505,7 +527,7 @@ var UI = (() => {
           if (!opt) return;
           let context = opt.value;
           if (context === "*") context = null;
-          ({siteMatch, perms, contextMatch} = policy.get(siteMatch, context));
+          ({siteMatch, perms, contextMatch} = this.policy.get(siteMatch, context));
           if (context && contextMatch !== context) {
             let temp = row.perms.temp || UI.forceIncognito;
             perms = new Permissions(new Set(row.perms.capabilities), temp);
@@ -522,7 +544,7 @@ var UI = (() => {
 
 
         let presetValue = preset.value;
-        let policyPreset = presetValue.startsWith("T_") ? policy[presetValue.substring(2)].tempTwin : policy[presetValue];
+        let policyPreset = presetValue.startsWith("T_") ? this.policy[presetValue.substring(2)].tempTwin : this.policy[presetValue];
 
         if (policyPreset && row.perms !== policyPreset) {
           row.perms = policyPreset;
@@ -541,7 +563,7 @@ var UI = (() => {
           delete row._customPerms;
           debug("Site match", siteMatch);
           if (siteMatch) {
-            policy.set(siteMatch, policyPreset);
+            this.policy.set(siteMatch, policyPreset);
           } else {
             this.customize(policyPreset, preset, row);
           }
@@ -555,7 +577,7 @@ var UI = (() => {
             let perms = row._customPerms ||
               (row._customPerms = new Permissions(new Set(row.perms.capabilities), temp));
             row.perms = perms;
-            policy.set(siteMatch, perms);
+            this.policy.set(siteMatch, perms);
             this.customize(perms, preset, row);
           }
         }
@@ -643,7 +665,7 @@ var UI = (() => {
           let selected = ctxSelect.querySelector("option:checked");
           ctxReset.disabled = !(selected && selected.value !== "*");
           ctxReset.onclick = () => {
-            let perms = UI.policy.get(row.siteMatch).perms;
+            let perms = this.policy.get(row.siteMatch).perms;
             perms.contextual.delete(row.contextMatch);
             row.permissionsChanged = row._originalPerms && !row.perms.sameAs(row._originalPerms);
             fireOnChange(this, row);
@@ -821,7 +843,7 @@ var UI = (() => {
             site = site.site;
             context = site.context;
           }
-          let {siteMatch, perms, contextMatch} = UI.policy.get(site, context);
+          let {siteMatch, perms, contextMatch} = this.policy.get(site, context);
           this.append(site, siteMatch, perms, contextMatch);
           if (!hasTemp) hasTemp = perms.temp;
         }
@@ -874,30 +896,28 @@ var UI = (() => {
     }
 
     async tempTrustAll() {
-      let {policy} = UI;
       let changed = 0;
       for (let row of this.allSiteRows()) {
         if (row._preset === "DEFAULT") {
-          policy.set(row._site, policy.TRUSTED.tempTwin);
+          this.policy.set(row._site, this.policy.TRUSTED.tempTwin);
           changed++;
         }
       }
       if (changed && UI.isDirty(true)) {
-        await UI.updateSettings({policy, reloadAffected: true});
+        await UI.updateSettings({policy: UI.policy, contextStore: UI.contextStore, reloadAffected: true});
       }
       return changed;
     }
 
     createSiteRow(site, siteMatch, perms, contextMatch = null, sitesCount = this.sitesCount++) {
       debug("Creating row for site: %s, matching %s / %s, %o", site, siteMatch, contextMatch, perms);
-      let policy = UI.policy;
       let row = this.rowTemplate.cloneNode(true);
       row.sitesCount = sitesCount;
       let url;
       try {
         url = new URL(site);
         if (siteMatch !== site && siteMatch === url.protocol) {
-          perms = policy.DEFAULT;
+          perms = this.policy.DEFAULT;
         }
       } catch (e) {
         if (/^(\w+:)\/*$/.test(site)) {
@@ -914,7 +934,7 @@ var UI = (() => {
 
       let {hostname} = url;
       let overrideDefault = site && url.protocol && site !== url.protocol ?
-        policy.get(url.protocol, contextMatch) : null;
+        this.policy.get(url.protocol, contextMatch) : null;
       if (overrideDefault && !overrideDefault.siteMatch) overrideDefault = null;
 
       let domain = tld.getDomain(hostname);
@@ -974,7 +994,7 @@ var UI = (() => {
       let getPresetName = perms => {
         let presetName = "CUSTOM";
         for (let p of ["TRUSTED", "UNTRUSTED", "DEFAULT"]) {
-          let preset = policy[p];
+          let preset = this.policy[p];
           switch (perms) {
             case preset:
               presetName = p;
@@ -1016,7 +1036,7 @@ var UI = (() => {
         for (let p of TEMP_PRESETS) {
           if (p in this.presets && (unsafeMatch || tempFirst && p === "TRUSTED")) {
             row.querySelector(`.presets input[value="${p}"]`).parentNode.querySelector("input.temp").checked = true;
-            perms = policy.TRUSTED.tempTwin;
+            perms = this.policy.TRUSTED.tempTwin;
           }
         }
       }
@@ -1050,9 +1070,8 @@ var UI = (() => {
       if (site !== row.siteMatch) {
         this.customize(null);
         let focused = document.activeElement;
-        let {policy} = UI;
-        policy.set(row.siteMatch, policy.DEFAULT);
-        policy.set(site, row.perms);
+        this.policy.set(row.siteMatch, this.policy.DEFAULT);
+        this.policy.set(site, row.perms);
         for(let r of this.allSiteRows()) {
           if (r !== row && r.siteMatch === site && r.contextMatch === row.contextMatch) {
             r.remove();

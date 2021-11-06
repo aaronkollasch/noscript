@@ -420,9 +420,10 @@ var RequestGuard = (() => {
   function checkLANRequest(request) {
     if (request._lanChecked) return false;
     request._lanChecked = true;
-    let {originUrl, url} = request;
+    let {originUrl, url, cookieStoreId} = request;
+    let policy = ns.getPolicy(cookieStoreId);
     if (originUrl && !Sites.isInternal(originUrl) && url.startsWith("http") &&
-      !ns.policy.can(originUrl, "lan", ns.policyContext(request))) {
+      !policy.can(originUrl, "lan", ns.policyContext(request))) {
       // we want to block any request whose origin resolves to at least one external WAN IP
       // and whose destination resolves to at least one LAN IP
       let neverDNS = ns.local.isTorBrowser || !(UA.isMozilla && DNS.supported);
@@ -463,7 +464,6 @@ var RequestGuard = (() => {
 
         initPendingRequest(request);
 
-        let {policy} = ns
         let {type, url, originUrl} = request;
 
         if (type in policyTypesMap) {
@@ -483,7 +483,9 @@ var RequestGuard = (() => {
             }
             return ALLOW;
           }
+          let {cookieStoreId} = request;
           let isFetch = "fetch" === policyType;
+          let policy = ns.getPolicy(cookieStoreId);
 
           if ((isFetch || "frame" === policyType) &&
               (((isFetch && !originUrl
@@ -581,12 +583,12 @@ var RequestGuard = (() => {
       let headersModified = false;
 
       pending.headersProcessed = true;
-      let {url, documentUrl, tabId, responseHeaders, type} = request;
+      let {url, documentUrl, tabId, cookieStoreId, responseHeaders, type} = request;
       let isMainFrame = type === "main_frame";
       try {
         let capabilities;
         if (ns.isEnforced(tabId)) {
-          let policy = ns.policy;
+          let policy = ns.getPolicy(cookieStoreId);
           let {perms} = policy.get(url, ns.policyContext(request));
           if (isMainFrame) {
             if (policy.autoAllowTop && perms === policy.DEFAULT) {
@@ -706,9 +708,11 @@ var RequestGuard = (() => {
     return ABORT;
   }
 
-  function injectPolicyScript(details) {
+  async function injectPolicyScript(details) {
+    console.debug("INJECT", details);
     let {url, tabId, frameId} = details;
-    let policy = ns.computeChildPolicy({url}, {tab: {id: tabId}, frameId});
+    let tab = await browser.tabs.get(tabId);
+    let policy = ns.computeChildPolicy({url}, {tab, frameId});
     policy.navigationURL = url;
     let debugStatement = ns.local.debug ? `
       let mark = Date.now() + ":" + Math.random();
