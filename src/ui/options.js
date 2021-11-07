@@ -240,6 +240,15 @@
         sitesUI.onChange();
       }
     }, true);
+
+    document.querySelector("#btn-clear-container").addEventListener("click", async ev => {
+      if (confirm("All site permissions for this container will be removed.\nThis action cannot be reverted.\nDo you want to continue?")) {
+        sitesUI.clear()
+        currentPolicy.sites = Sites.hydrate({});
+        await UI.updateSettings({policy, contextStore});
+        sitesUI.render(currentPolicy.sites);
+      }
+    });
   }
 
 
