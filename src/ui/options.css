@@ -84,6 +84,9 @@ fieldset:disabled {
 #newsite {
   flex: 2 2;
 }
+#btn-clear-container {
+  margin-top: .5em;
+}
 
 #policy {
   display: block;
