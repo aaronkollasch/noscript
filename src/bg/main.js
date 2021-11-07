@@ -67,16 +67,11 @@
       let contextStoreData = (await Storage.get("sync", "contextStore")).contextStore;
       if (contextStoreData) {
         ns.contextStore = new ContextStore(contextStoreData);
-        await ns.contextStore.updateContainers();
+        await ns.contextStore.updateContainers(ns.policy);
       } else {
-        log("No container data found. Initializing new empty policies.")
-        identities = await browser.contextualIdentities.query({});
-        policies = new Object();
-        identities.forEach(({cookieStoreId}) => {
-          policies[cookieStoreId] = new Policy();
-        })
-        ns.contextStore = new ContextStore(({policies}));
-        await ns.contextStore.updateContainers();
+        log("No container data found. Initializing new policies.")
+        ns.contextStore = new ContextStore();
+        await ns.contextStore.updateContainers(ns.policy);
         await ns.saveContextStore();
       }
     }
