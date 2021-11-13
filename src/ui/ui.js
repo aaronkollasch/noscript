@@ -130,7 +130,7 @@ var UI = (() => {
 //       debug("get policy", cookieStoreId, this.policy, this.contextStore);
       if (this.contextStore.policies.hasOwnProperty(cookieStoreId)) {
         let currentPolicy = this.contextStore.policies[cookieStoreId];
-        debug("has cookiestore", cookieStoreId, currentPolicy);
+        debug("id", cookieStoreId, "has cookiestore", currentPolicy);
         return currentPolicy;
       } else {
         debug("default cookiestore", cookieStoreId);

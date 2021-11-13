@@ -709,7 +709,6 @@ var RequestGuard = (() => {
   }
 
   async function injectPolicyScript(details) {
-    console.debug("INJECT", details);
     let {url, tabId, frameId} = details;
     let tab = await browser.tabs.get(tabId);
     let policy = ns.computeChildPolicy({url}, {tab, frameId});
