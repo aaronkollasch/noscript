@@ -165,6 +165,7 @@
   // SITES UI
   let sitesUI = new UI.Sites(document.getElementById("sites"));
   let containerSelect = document.querySelector("#select-container");
+  let containerCopy = document.querySelector("#copy-container");
   var cookieStoreId = containerSelect.value;
   var currentPolicy = await UI.getPolicy(cookieStoreId);
 
@@ -177,6 +178,23 @@
     sitesUI.render(currentPolicy.sites);
   }
   containerSelect.onchange = changeContainer;
+
+  async function copyContainer() {
+    cookieStoreId = containerSelect.value;
+    let copyCookieStoreId = containerCopy.value;
+    let copyContainerName = containerCopy.options[containerCopy.selectedIndex].text;
+    let copyPolicy = await UI.getPolicy(copyCookieStoreId);
+    if (confirm(`Copying permissions from "${copyContainerName}".\n` + "All site permissions for this container will be removed.\nThis action cannot be reverted.\nDo you want to continue?")) {
+        sitesUI.clear()
+        currentPolicy = await UI.replacePolicy(cookieStoreId, new Policy(copyPolicy.dry(true)));
+        await UI.updateSettings({policy, contextStore});
+        sitesUI.render(currentPolicy.sites);
+      }
+    sitesUI.clear()
+    sitesUI.policy = currentPolicy;
+    sitesUI.render(currentPolicy.sites);
+  }
+  containerCopy.onchange = copyContainer;
 
   var containers = [];
   async function updateContainers() {
@@ -193,8 +211,10 @@
     }
     containerSelect.innerHTML = container_options;
     containerSelect.value = cookieStoreId;
+    containerCopy.innerHTML = container_options;
   }
   containerSelect.onfocus = updateContainers;
+  containerCopy.onfocus = updateContainers;
   await updateContainers();
 
   UI.onSettings = async () => {

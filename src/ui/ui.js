@@ -138,6 +138,21 @@ var UI = (() => {
       }
     },
 
+    async replacePolicy(cookieStoreId, policy) {
+      await this.contextStore.updateContainers(this.policy);
+//       debug("set policy", cookieStoreId, this.policy, this.contextStore);
+      if (this.contextStore.policies.hasOwnProperty(cookieStoreId)) {
+        this.contextStore.policies[cookieStoreId] = policy;
+        debug("replaced id", cookieStoreId, "with policy", policy);
+        let currentPolicy = this.contextStore.policies[cookieStoreId];
+        return currentPolicy;
+      } else {
+        this.policy = policy;
+        debug("replaced default cookiestore", cookieStoreId, "with policy", policy);
+        return this.policy;
+      }
+    },
+
     isDirty(reset = false) {
       let currentSnapshot = this.policy.snapshot+this.contextStore.snapshot;
       let dirty = currentSnapshot != this.snapshot;

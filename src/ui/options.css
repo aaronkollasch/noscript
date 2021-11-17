@@ -84,8 +84,23 @@ fieldset:disabled {
 #newsite {
   flex: 2 2;
 }
+
+.per-site-buttons {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-end;
+  width: 100%;
+  text-align: right;
+  margin: .5em 0 0 0;
+}
 #btn-clear-container {
-  margin-top: .5em;
+  margin-inline-start: .5em;
+}
+#copy-container {
+  margin-inline: .5em;
+}
+#copy-container-label {
+  margin-block: .5em;
 }
 
 #policy {
