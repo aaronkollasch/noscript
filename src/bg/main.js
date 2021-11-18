@@ -359,6 +359,7 @@
 
     async saveContextStore() {
       if (this.contextStore) {
+        debug("save contextstore", this.contextStore);
         await Storage.set("sync", {
           contextStore: this.contextStore.dry()
         });
@@ -366,8 +367,6 @@
       }
       return this.contextStore;
     },
-
-
 
     async save(obj) {
       if (obj && obj.storage) {
