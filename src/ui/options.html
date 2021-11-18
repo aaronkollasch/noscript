@@ -70,7 +70,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <div class="flextabs__content">
   <label for="select-container">Choose a container:</label>
   <select name="select-container" id="select-container">
-  <option value="default">Default</option>
+    <option value="default">Default</option>
   </select>
   <section class="sect-sites">
   <form id="form-newsite" class="browser-style" >
@@ -82,7 +82,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
   	   <div class="cssload-whirlpool"></div>
     </div>
   </div>
-  <button id="btn-clear-container">Clear permissions for this container</button>
+  <div class="per-site-buttons">
+    <label for="copy-container" id="copy-container-label">Copy permissions from container:</label>
+    <select name="copy-container" id="copy-container">
+      <option value="default">Default</option>
+    </select>
+    <div style="inline-size:0;margin-inline:.5em;border:1px solid #888"></div>
+    <button id="btn-clear-container">Clear permissions for this container</button>
+  </div>
   </section>
 </div>
 

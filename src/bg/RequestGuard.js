@@ -247,7 +247,9 @@ var RequestGuard = (() => {
       }
       let key = [siteKey, origin][ret.option || 0];
       if (!key) return;
-      let {siteMatch, contextMatch, perms} = ns.policy.get(key, documentUrl);
+      let cookieStoreId = sender.tab && sender.tab.cookieStoreId;
+      let policy = ns.getPolicy(cookieStoreId);
+      let {siteMatch, contextMatch, perms} = policy.get(key, documentUrl);
       let {capabilities} = perms;
       if (!capabilities.has(policyType)) {
         let temp = sender.tab.incognito; // we don't want to store in PBM
@@ -260,8 +262,9 @@ var RequestGuard = (() => {
           perms = new Permissions(new Set(capabilities), false, contextualSites);
         }
         */
-        ns.policy.set(key, perms);
+        policy.set(key, perms);
         await ns.savePolicy();
+        await ns.saveContextStore();
       }
       return {enable: key};
     },
@@ -335,7 +338,8 @@ var RequestGuard = (() => {
   };
 
   function intersectCapabilities(perms, request) {
-    let {frameId, frameAncestors, tabId} = request;
+    let {frameId, frameAncestors, tabId, cookieStoreId} = request;
+    let policy = ns.getPolicy(cookieStoreId);
     if (frameId !== 0 && ns.sync.cascadeRestrictions) {
       let topUrl = frameAncestors && frameAncestors.length
         && frameAncestors[frameAncestors.length - 1].url;
@@ -344,7 +348,7 @@ var RequestGuard = (() => {
         if (tab) topUrl = tab.url;
       }
       if (topUrl) {
-        return ns.policy.cascadeRestrictions(perms, topUrl).capabilities;
+        return policy.cascadeRestrictions(perms, topUrl).capabilities;
       }
     }
     return perms.capabilities;
