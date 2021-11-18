@@ -175,7 +175,6 @@ var Settings = {
 
     if (contextStore) {
       let newContextStore = new ContextStore(contextStore);
-      debug("set contextstore", newContextStore);
       ns.contextStore = newContextStore
       await ns.saveContextStore();
     }
