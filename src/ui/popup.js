@@ -275,7 +275,7 @@ addEventListener("unload", e => {
       });
       optionsClosed = true;
     };
-    await initSitesUI();
+    initSitesUI();
     UI.onSettings = initSitesUI;
 
     if (UI.incognito) {
@@ -287,7 +287,7 @@ addEventListener("unload", e => {
       });
     }
 
-    async function initSitesUI() {
+    function initSitesUI() {
       pendingReload(false);
       let {
         typesMap
