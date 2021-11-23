@@ -67,13 +67,17 @@ addEventListener("unload", e => {
       tabId = tab.id;
     }
 
-    try {
-      let containerName = (await browser.contextualIdentities.get(cookieStoreId)).name;
-      document.querySelector("#container-id").textContent = containerName;
-      debug("found container name", containerName, "for cookieStoreId", cookieStoreId);
-    } catch(err) {
+    if (browser.contextualIdentities){
+      try {
+        let containerName = (await browser.contextualIdentities.get(cookieStoreId)).name;
+        document.querySelector("#container-id").textContent = containerName;
+        debug("found container name", containerName, "for cookieStoreId", cookieStoreId);
+      } catch(err) {
+        document.querySelector("#container-id").textContent = "Default";
+        debug("no container for cookieStoreId", cookieStoreId, "error:", err.message);
+      }
+    } else {
       document.querySelector("#container-id").style.visibility = 'hidden';
-      debug("no container for cookieStoreId", cookieStoreId, "error:", err.message);
     }
 
     addEventListener("keydown", e => {

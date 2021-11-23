@@ -175,6 +175,10 @@
   var cookieStoreId = containerSelect.value;
   var currentPolicy = await UI.getPolicy(cookieStoreId);
 
+  containerSelect.hidden = !browser.contextualIdentities;
+  document.querySelector("#select-container-label").hidden = containerSelect.hidden;
+  if (!browser.contextualIdentities) document.querySelector("#per-site-buttons").style.display = "none";
+
   async function changeContainer() {
     cookieStoreId = containerSelect.value;
     currentPolicy = await UI.getPolicy(cookieStoreId);
@@ -205,10 +209,12 @@
   var containers = [];
   async function updateContainers() {
     let newContainers = [{cookieStoreId: "default", name: "Default"},];
-    let identities = await browser.contextualIdentities.query({});
-    identities.forEach(({cookieStoreId, name}) => {
-      newContainers.push({cookieStoreId, name});
-    })
+    let identities = browser.contextualIdentities && await browser.contextualIdentities.query({});
+    if (identities) {
+      identities.forEach(({cookieStoreId, name}) => {
+        newContainers.push({cookieStoreId, name});
+      })
+    }
     if (JSON.stringify(newContainers) == JSON.stringify(containers)) return;
     containers = newContainers;
     var container_options = ""
@@ -307,6 +313,10 @@
     if (!UI.local.debug) return;
 
     // RAW POLICY EDITING (debug only)
+    if (!browser.contextualIdentities) {
+      document.querySelector("#edit-context-store").style.display = "none";
+      return;
+    }
     let contextStoreEditor = document.getElementById("context-store");
     contextStoreEditor.value = JSON.stringify(contextStore.dry(true), null, 2);
     if (!contextStoreEditor.onchange) contextStoreEditor.onchange = (e) => {
