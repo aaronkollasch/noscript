@@ -3,6 +3,11 @@
 run:
 	web-ext run -s src/
 
+run-chrome:
+        # https://github.com/mozilla/web-ext/issues/809
+        #/Applications/Chromium.app/Contents/MacOS/Chromium --temp-profile --password-store=basic --load-extension=src/ about:blank
+        web-ext run -t 'chromium' --chromium-binary /Applications/Chromium.app/Contents/MacOS/Chromium -s src/
+
 build:
 	bash build.sh
 
