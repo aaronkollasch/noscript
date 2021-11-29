@@ -35,7 +35,7 @@
   opt("global", o => {
     if (o) {
       policy.enforced = !o.checked;
-      contextStore.setAll({key: "enforced", value: !o.checked});
+      contextStore.setAll({"enforced": !o.checked});
       UI.updateSettings({policy, contextStore});
     }
     let {enforced} = policy;
@@ -49,7 +49,7 @@
   opt("auto", o => {
     if (o) {
       policy.autoAllowTop = o.checked;
-      contextStore.setAll({key: "autoAllowTop", value: o.checked});
+      contextStore.setAll({"autoAllowTop": o.checked});
       UI.updateSettings({policy, contextStore});
     }
     return policy.autoAllowTop;
