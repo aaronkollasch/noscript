@@ -195,14 +195,12 @@
     let copyContainerName = containerCopy.options[containerCopy.selectedIndex].text;
     let copyPolicy = await UI.getPolicy(copyCookieStoreId);
     if (confirm(`Copying permissions from "${copyContainerName}".\n` + "All site permissions for this container will be removed.\nThis action cannot be reverted.\nDo you want to continue?")) {
-        sitesUI.clear()
-        currentPolicy = await UI.replacePolicy(cookieStoreId, new Policy(copyPolicy.dry(true)));
-        await UI.updateSettings({policy, contextStore});
-        sitesUI.render(currentPolicy.sites);
-      }
-    sitesUI.clear()
-    sitesUI.policy = currentPolicy;
-    sitesUI.render(currentPolicy.sites);
+      sitesUI.clear()
+      currentPolicy = await UI.replacePolicy(cookieStoreId, new Policy(copyPolicy.dry(true)));
+      await UI.updateSettings({policy, contextStore});
+      sitesUI.policy = currentPolicy;
+      sitesUI.render(currentPolicy.sites);
+    }
   }
   containerCopy.onchange = copyContainer;
 
