@@ -256,8 +256,7 @@
     },
 
     getPolicy(cookieStoreId){
-//       debug("get policy", cookieStoreId, ns.policy, ns.contextStore);
-      if (ns.contextStore.policies.hasOwnProperty(cookieStoreId)) {
+      if (ns.contextStore.enabled && ns.contextStore.policies.hasOwnProperty(cookieStoreId)) {
         let currentPolicy = ns.contextStore.policies[cookieStoreId];
         debug("id", cookieStoreId, "has cookiestore", currentPolicy);
         if (currentPolicy) return currentPolicy;

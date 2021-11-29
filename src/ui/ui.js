@@ -127,8 +127,7 @@ var UI = (() => {
 
     async getPolicy(cookieStoreId) {
       await this.contextStore.updateContainers(this.policy);
-//       debug("get policy", cookieStoreId, this.policy, this.contextStore);
-      if (this.contextStore.policies.hasOwnProperty(cookieStoreId)) {
+      if (this.contextStore.enabled && this.contextStore.policies.hasOwnProperty(cookieStoreId)) {
         let currentPolicy = this.contextStore.policies[cookieStoreId];
         debug("id", cookieStoreId, "has cookiestore", currentPolicy);
         return currentPolicy;
@@ -140,7 +139,6 @@ var UI = (() => {
 
     async replacePolicy(cookieStoreId, policy) {
       await this.contextStore.updateContainers(this.policy);
-//       debug("set policy", cookieStoreId, this.policy, this.contextStore);
       if (this.contextStore.policies.hasOwnProperty(cookieStoreId)) {
         this.contextStore.policies[cookieStoreId] = policy;
         debug("replaced id", cookieStoreId, "with policy", policy);

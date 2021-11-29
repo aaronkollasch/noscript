@@ -67,19 +67,6 @@ addEventListener("unload", e => {
       tabId = tab.id;
     }
 
-    if (browser.contextualIdentities){
-      try {
-        let containerName = (await browser.contextualIdentities.get(cookieStoreId)).name;
-        document.querySelector("#container-id").textContent = containerName;
-        debug("found container name", containerName, "for cookieStoreId", cookieStoreId);
-      } catch(err) {
-        document.querySelector("#container-id").textContent = "Default";
-        debug("no container for cookieStoreId", cookieStoreId, "error:", err.message);
-      }
-    } else {
-      document.querySelector("#container-id").style.visibility = 'hidden';
-    }
-
     addEventListener("keydown", e => {
       if (e.code === "Enter") {
         let focused = document.activeElement;
@@ -105,6 +92,19 @@ addEventListener("unload", e => {
       browser.tabs.onActivated.addListener(e => {
         if (e.tabId !== tabId) close();
       });
+    }
+
+    if (UI.contextStore && UI.contextStore.enabled && browser.contextualIdentities) {
+      try {
+        let containerName = (await browser.contextualIdentities.get(cookieStoreId)).name;
+        document.querySelector("#container-id").textContent = containerName;
+        debug("found container name", containerName, "for cookieStoreId", cookieStoreId);
+      } catch(err) {
+        document.querySelector("#container-id").textContent = "Default";
+        debug("no container for cookieStoreId", cookieStoreId, "error:", err.message);
+      }
+    } else {
+      document.querySelector("#container-id").style.visibility = 'hidden';
     }
 
     await include("/ui/toolbar.js");
