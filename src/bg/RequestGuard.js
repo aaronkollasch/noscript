@@ -339,6 +339,7 @@ var RequestGuard = (() => {
 
   function intersectCapabilities(perms, request) {
     let {frameId, frameAncestors, tabId, cookieStoreId} = request;
+    let policy = ns.getPolicy(cookieStoreId);
     if (frameId !== 0 && ns.sync.cascadeRestrictions) {
       let topUrl = frameAncestors && frameAncestors.length
         && frameAncestors[frameAncestors.length - 1].url;
@@ -347,7 +348,6 @@ var RequestGuard = (() => {
         if (tab) topUrl = tab.url;
       }
       if (topUrl) {
-        let policy = ns.getPolicy(cookieStoreId);
         return policy.cascadeRestrictions(perms, topUrl).capabilities;
       }
     }
@@ -644,9 +644,10 @@ var RequestGuard = (() => {
     return ABORT;
   }
 
-  function injectPolicyScript(details) {
+  async function injectPolicyScript(details) {
     let {url, tabId, frameId} = details;
-    let policy = ns.computeChildPolicy({url}, {tab: {id: tabId}, frameId});
+    let tab = await browser.tabs.get(tabId);
+    let policy = ns.computeChildPolicy({url}, {tab, frameId});
     policy.navigationURL = url;
     let debugStatement = ns.local.debug ? `
       let mark = Date.now() + ":" + Math.random();
