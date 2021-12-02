@@ -1,7 +1,7 @@
 
 
 run:
-	web-ext run -s src/
+	web-ext run -s src/ -u about:debugging#/runtime/this-firefox
 
 run-chrome:
         # https://github.com/mozilla/web-ext/issues/809
