@@ -35,7 +35,7 @@
   opt("global", o => {
     if (o) {
       policy.enforced = !o.checked;
-      contextStore.setAll({key: "enforced", value: !o.checked});
+      contextStore.setAll({"enforced": !o.checked});
       UI.updateSettings({policy, contextStore});
     }
     let {enforced} = policy;
@@ -49,13 +49,23 @@
   opt("auto", o => {
     if (o) {
       policy.autoAllowTop = o.checked;
-      contextStore.setAll({key: "autoAllowTop", value: o.checked});
+      contextStore.setAll({"autoAllowTop": o.checked});
       UI.updateSettings({policy, contextStore});
     }
     return policy.autoAllowTop;
   });
 
   opt("cascadeRestrictions");
+
+  opt("containers", async o => {
+    if (o) {
+      contextStore.enabled = o.checked;
+      await contextStore.updateContainers(policy);
+      UI.updateSettings({contextStore});
+    }
+    updateContainersEnabled();
+    return contextStore.enabled;
+  })
 
   opt("xss");
 
@@ -175,9 +185,15 @@
   var cookieStoreId = containerSelect.value;
   var currentPolicy = await UI.getPolicy(cookieStoreId);
 
-  containerSelect.hidden = !browser.contextualIdentities;
-  document.querySelector("#select-container-label").hidden = containerSelect.hidden;
-  if (!browser.contextualIdentities) document.querySelector("#per-site-buttons").style.display = "none";
+  function updateContainersEnabled() {
+    let containersEnabled = Boolean(contextStore.enabled && browser.contextualIdentities);
+    document.querySelector("#opt-containers").disabled = !browser.contextualIdentities;
+    document.querySelector("#opt-containers").checked = contextStore.enabled;
+    document.querySelector("#select-container").hidden = !containersEnabled;
+    document.querySelector("#select-container-label").hidden = !containersEnabled;
+    document.querySelector("#per-site-buttons").style.display = containersEnabled? "flex" : "none";
+  }
+  updateContainersEnabled();
 
   async function changeContainer() {
     cookieStoreId = containerSelect.value;
@@ -195,19 +211,17 @@
     let copyContainerName = containerCopy.options[containerCopy.selectedIndex].text;
     let copyPolicy = await UI.getPolicy(copyCookieStoreId);
     if (confirm(`Copying permissions from "${copyContainerName}".\n` + "All site permissions for this container will be removed.\nThis action cannot be reverted.\nDo you want to continue?")) {
-        sitesUI.clear()
-        currentPolicy = await UI.replacePolicy(cookieStoreId, new Policy(copyPolicy.dry(true)));
-        await UI.updateSettings({policy, contextStore});
-        sitesUI.render(currentPolicy.sites);
-      }
-    sitesUI.clear()
-    sitesUI.policy = currentPolicy;
-    sitesUI.render(currentPolicy.sites);
+      sitesUI.clear()
+      currentPolicy = await UI.replacePolicy(cookieStoreId, new Policy(copyPolicy.dry(true)));
+      await UI.updateSettings({policy, contextStore});
+      sitesUI.policy = currentPolicy;
+      sitesUI.render(currentPolicy.sites);
+    }
   }
   containerCopy.onchange = copyContainer;
 
   var containers = [];
-  async function updateContainers() {
+  async function updateContainerOptions() {
     let newContainers = [{cookieStoreId: "default", name: "Default"},];
     let identities = browser.contextualIdentities && await browser.contextualIdentities.query({});
     if (identities) {
@@ -225,9 +239,9 @@
     containerSelect.value = cookieStoreId;
     containerCopy.innerHTML = container_options;
   }
-  containerSelect.onfocus = updateContainers;
-  containerCopy.onfocus = updateContainers;
-  await updateContainers();
+  containerSelect.onfocus = updateContainerOptions;
+  containerCopy.onfocus = updateContainerOptions;
+  if (contextStore.enabled) await updateContainerOptions();
 
   UI.onSettings = async () => {
     currentPolicy = await UI.getPolicy(cookieStoreId);
