@@ -65,7 +65,7 @@ if [[ "$1" == "bump" ]]; then
   exit
 fi
 XPI_DIR="$BASE/xpi"
-XPI="$XPI_DIR/noscript-$VER"
+XPI="$XPI_DIR/noscript_aaronkollasch_fork_-$VER"
 LIB="$SRC/lib"
 
 NSCL="$SRC/nscl"
