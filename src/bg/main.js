@@ -261,18 +261,19 @@
 
     computeChildPolicy({url, contextUrl}, sender) {
       let {tab, frameId} = sender;
-      let cookieStoreId = (tab)? tab.cookieStoreId : "default";
-      var policy = ns.policy;
-      debug("computing policy", cookieStoreId, ns.contextStore);
-      if (
-          cookieStoreId && 
-          !cookieStoreId.toLowerCase().includes("default") &&  //exclude firefox-default
-          ns.contextStore && 
-          ns.contextStore.policies.hasOwnProperty(cookieStoreId)
-      ) {
-        policy = ns.contextStore.policies[cookieStoreId];
+      let tabId = tab ? tab.id : -1;
+      let topUrl;
+      if (frameId === 0) {
+        topUrl = url;
+      } else if (tab) {
+        if (!tab.url) tab = TabCache.get(tabId);
+        if (tab) topUrl = tab.url;
       }
-      debug("chose policy", policy);
+      if (!topUrl) topUrl = url;
+      if (!contextUrl) contextUrl = topUrl;
+
+      let cookieStoreId = (tab)? tab.cookieStoreId : "default";
+      var policy = ns.getPolicy(cookieStoreId);
       let {isTorBrowser} = ns.local;
       if (!policy) {
         console.log("Policy is null, initializing: %o, sending fallback.", ns.initializing);
@@ -284,17 +285,6 @@
           isTorBrowser,
         };
       }
-
-      let tabId = tab ? tab.id : -1;
-      let topUrl;
-      if (frameId === 0) {
-        topUrl = url;
-      } else if (tab) {
-        if (!tab.url) tab = TabCache.get(tabId);
-        if (tab) topUrl = tab.url;
-      }
-      if (!topUrl) topUrl = url;
-      if (!contextUrl) contextUrl = topUrl;
 
       if (Sites.isInternal(url) || !ns.isEnforced(tabId)) {
         policy = null;
