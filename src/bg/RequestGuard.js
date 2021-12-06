@@ -712,10 +712,9 @@ var RequestGuard = (() => {
     return ABORT;
   }
 
-  async function injectPolicyScript(details) {
-    let {url, tabId, frameId} = details;
-    let tab = await browser.tabs.get(tabId);
-    let policy = ns.computeChildPolicy({url}, {tab, frameId});
+  function injectPolicyScript(details) {
+    let {url, tabId, frameId, cookieStoreId} = details;
+    let policy = ns.computeChildPolicy({url}, {tab: {id: tabId}, frameId, cookieStoreId});
     policy.navigationURL = url;
     let debugStatement = ns.local.debug ? `
       let mark = Date.now() + ":" + Math.random();
