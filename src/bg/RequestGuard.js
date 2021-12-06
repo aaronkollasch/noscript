@@ -352,7 +352,6 @@ var RequestGuard = (() => {
 
   function intersectCapabilities(perms, request) {
     let {frameId, frameAncestors, tabId, cookieStoreId} = request;
-    let policy = ns.getPolicy(cookieStoreId);
     if (frameId !== 0 && ns.sync.cascadeRestrictions) {
       let topUrl = frameAncestors && frameAncestors.length
         && frameAncestors[frameAncestors.length - 1].url;
@@ -361,6 +360,7 @@ var RequestGuard = (() => {
         if (tab) topUrl = tab.url;
       }
       if (topUrl) {
+        let policy = ns.getPolicy(cookieStoreId);
         return policy.cascadeRestrictions(perms, topUrl).capabilities;
       }
     }
