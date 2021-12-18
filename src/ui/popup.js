@@ -46,7 +46,6 @@ addEventListener("unload", e => {
         : null,
       active: true
     }))[0];
-    let cookieStoreId = tab.cookieStoreId;
     let pageTab = tab;
 
     if (!tab || tab.id === -1) {
@@ -65,6 +64,7 @@ addEventListener("unload", e => {
     } else {
       tabId = tab.id;
     }
+    let cookieStoreId = pageTab.cookieStoreId;
 
     addEventListener("keydown", e => {
       if (e.code === "Enter") {
