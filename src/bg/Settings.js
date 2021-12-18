@@ -145,7 +145,6 @@ var Settings = {
     }
 
     if (settings.sync === null) {
-      debug("resetting options", settings);
       // user is resetting options
       policy = this.createDefaultDryPolicy();
       contextStore = new ContextStore().dry();

@@ -256,7 +256,11 @@
     },
 
     getPolicy(cookieStoreId){
-      if (ns.contextStore.enabled && ns.contextStore.policies.hasOwnProperty(cookieStoreId)) {
+      if (
+        ns.contextStore &&
+        ns.contextStore.enabled &&
+        ns.contextStore.policies.hasOwnProperty(cookieStoreId)
+      ) {
         let currentPolicy = ns.contextStore.policies[cookieStoreId];
         debug("id", cookieStoreId, "has cookiestore", currentPolicy);
         if (currentPolicy) return currentPolicy;
@@ -364,7 +368,6 @@
 
     async saveContextStore() {
       if (this.contextStore) {
-        debug("save contextstore", this.contextStore);
         await Storage.set("sync", {
           contextStore: this.contextStore.dry()
         });
