@@ -699,6 +699,18 @@
         "message": "Закладка конфигурации NoScript",
         "description": ""
     },
+    "caps": {
+        "message": "Разрешить отмеченное",
+        "description": ""
+    },
+    "capsContext": {
+        "message": "Разрешить отмеченное, если страница",
+        "description": ""
+    },
+    "anySite": {
+        "message": "ЛЮБАЯ",
+        "description": ""
+    },
     "cap_script": {
         "message": "script",
         "description": ""
@@ -736,7 +748,11 @@
         "description": ""
     },
     "cap_unchecked_css": {
-        "message": "небезопасные CSS",
+        "message": "unrestricted CSS",
+        "description": ""
+    },
+    "cap_lan": {
+        "message": "LAN",
         "description": ""
     },
     "cap_other": {

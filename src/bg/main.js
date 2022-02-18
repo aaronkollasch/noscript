@@ -227,7 +227,7 @@
 
   function onSyncMessage(msg, sender) {
     switch(msg.id) {
-      case "fetchPolicy":
+      case "fetchChildPolicy":
         return messageHandler.fetchChildPolicy(msg, sender);
       break;
     }
@@ -244,9 +244,29 @@
     isEnforced(tabId = -1) {
       return this.policy.enforced && (tabId === -1 || !this.unrestrictedTabs.has(tabId));
     },
-
+    policyContext(contextualData) {
+      // contextualData (e.g. a request details object) must contain a tab, a tabId or a documentUrl
+      // (used as a fallback if tab's top URL cannot be retrieved, e.g. in service workers)
+      let {tab, tabId, documentUrl, url} = contextualData;
+      if (!tab) tab = tabId !== -1 && TabCache.get(tabId);
+      return tab && tab.url || documentUrl || url;
+    },
     requestCan(request, capability) {
-      return !this.isEnforced(request.tabId) || this.policy.can(request.url, capability, request.documentURL);
+      return !this.isEnforced(request.tabId) || this.policy.can(request.url, capability, this.policyContext(request));
+    },
+
+    getPolicy(cookieStoreId){
+      if (
+        ns.contextStore &&
+        ns.contextStore.enabled &&
+        ns.contextStore.policies.hasOwnProperty(cookieStoreId)
+      ) {
+        let currentPolicy = ns.contextStore.policies[cookieStoreId];
+        debug("id", cookieStoreId, "has cookiestore", currentPolicy);
+        if (currentPolicy) return currentPolicy;
+      }
+      debug("default cookiestore", cookieStoreId);
+      return ns.policy;
     },
 
     getPolicy(cookieStoreId){
@@ -338,6 +358,16 @@
 
     test() {
       include("/test/run.js");
+    },
+
+    async testIC(callbackOrUrl) {
+      await include("xss/InjectionChecker.js");
+      let IC = await XSS.InjectionChecker;
+      let ic = new IC();
+      ic.logEnabled = true;
+      return (typeof callbackOrUrl === "function")
+        ? await callbackOrUrl(ic)
+        : ic.checkUrl(callbackOrUrl);
     },
 
     async savePolicy() {

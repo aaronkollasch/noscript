@@ -699,6 +699,18 @@
         "message": "Configurazione NoScript per i Segnalibri",
         "description": ""
     },
+    "caps": {
+        "message": "Permetti queste capacità",
+        "description": ""
+    },
+    "capsContext": {
+        "message": "Permetti quando la pagina principale proviene da",
+        "description": ""
+    },
+    "anySite": {
+        "message": "QUALUNQUE SITO",
+        "description": ""
+    },
     "cap_script": {
         "message": "script",
         "description": ""
@@ -737,6 +749,10 @@
     },
     "cap_unchecked_css": {
         "message": "unrestricted CSS",
+        "description": ""
+    },
+    "cap_lan": {
+        "message": "LAN",
         "description": ""
     },
     "cap_other": {

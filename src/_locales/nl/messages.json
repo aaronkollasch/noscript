@@ -699,6 +699,18 @@
         "message": "NoScript-configuratiebladwijzer",
         "description": ""
     },
+    "caps": {
+        "message": "Deze mogelijkheden inschakelen",
+        "description": ""
+    },
+    "capsContext": {
+        "message": "Deze mogelijkheden inschakelen als bovenste pagina overeenkomt",
+        "description": ""
+    },
+    "anySite": {
+        "message": "ALLE WEBSITES",
+        "description": ""
+    },
     "cap_script": {
         "message": "script",
         "description": ""
@@ -737,6 +749,10 @@
     },
     "cap_unchecked_css": {
         "message": "onbeperkte CSS",
+        "description": ""
+    },
+    "cap_lan": {
+        "message": "LAN",
         "description": ""
     },
     "cap_other": {

@@ -327,11 +327,19 @@ var UI = (() => {
     <tr tabindex="-1" class="customizer">
     <td colspan="2">
     <div class="customizer-controls">
-    <fieldset><legend></legend>
+    <fieldset>
+    <legend class="capsContext">
+      <label></label>
+      <select><option>ANY SITE</option></select>
+      <button class="reset" disabled>Reset</button>
+    </legend>
+    <div class="caps">
     <span class="cap">
       <input class="cap" type="checkbox" value="script" />
       <label class="cap">script</label>
     </span>
+    </div>
+
     </fieldset>
     </div>
     </td>
@@ -403,12 +411,12 @@ var UI = (() => {
 
       // CUSTOMIZER ROW
       {
-        let [customizer, legend, cap, capInput, capLabel] = table.querySelectorAll(".customizer, legend, span.cap, input.cap, label.cap");
+        let [customizer, capsContext, cap, capInput, capLabel] = table.querySelectorAll(".customizer, .capsContext, span.cap, input.cap, label.cap");
         row._customizer = customizer;
         customizer.remove();
+        customizer.capsContext = capsContext;
         let capParent = cap.parentNode;
         capParent.removeChild(cap);
-        legend.textContent = _("allow");
         let idSuffix = UI.Sites.count;
         for (let capability of Permissions.ALL) {
           capInput.id = `capability-${capability}-${idSuffix}`
@@ -526,6 +534,28 @@ var UI = (() => {
         if (!row._originalPerms) {
           row._originalPerms = row.perms.clone();
         }
+
+        if (target.matches(".capsContext select")) {
+          let opt = target.querySelector("option:checked");
+          if (!opt) return;
+          let context = opt.value;
+          if (context === "*") context = null;
+          ({siteMatch, perms, contextMatch} = this.policy.get(siteMatch, context));
+          if (context && contextMatch !== context) {
+            let temp = row.perms.temp || UI.forceIncognito;
+            perms = new Permissions(new Set(row.perms.capabilities), temp);
+            row.perms.contextual.set(context, perms);
+            fireOnChange(this, row);
+          }
+          row.perms = row._customPerms = perms;
+          row.siteMatch = siteMatch;
+          row.contextMatch = context;
+          this.setupCaps(perms, preset, row);
+          tempToggle.checked = perms.temp;
+          return;
+        }
+
+
         let presetValue = preset.value;
         let policyPreset = presetValue.startsWith("T_") ? this.policy[presetValue.substring(2)].tempTwin : this.policy[presetValue];
 
@@ -566,17 +596,38 @@ var UI = (() => {
         }
         row.permissionsChanged = !row.perms.sameAs(row._originalPerms);
         fireOnChange(this, row);
-      } else if (!(isCap || isTemp) && ev.type === "click") {
-          this.customize(row.perms, preset, row);
+      } else if (!(isCap || isTemp || customizer) && ev.type === "click") {
+        this.customize(row.perms, preset, row);
+      }
+    }
+
+    setupCaps(perms, preset, row) {
+      let immutable = Permissions.IMMUTABLE[preset.value] || {};
+      let lastInput = null;
+      for (let input of this.rowTemplate._customizer.querySelectorAll("input")) {
+        let type = input.value;
+        if (type in immutable) {
+          input.disabled = true;
+          input.checked = immutable[type];
+        } else {
+          input.checked = perms.allowing(type);
+          input.disabled = false;
+          lastInput = input;
+        }
+        input.parentNode.classList.toggle("needed", this.siteNeeds(row._site, type));
       }
     }
 
     customize(perms, preset, row) {
+      let customizer = this.rowTemplate._customizer;
+      if (!preset) {
+        preset = customizer._preset;
+        delete customizer._preset;
+      }
       debug("Customize preset %s (%o) - Dirty: %s", preset && preset.value, perms, this.dirty);
       for(let r of this.table.querySelectorAll("tr.customizing")) {
         r.classList.toggle("customizing", false);
       }
-      let customizer = this.rowTemplate._customizer;
       customizer.classList.toggle("closed", true);
 
       if (!(perms && row && preset &&
@@ -591,24 +642,70 @@ var UI = (() => {
 
       customizer._preset = preset;
       row.classList.toggle("customizing", true);
-      let immutable = Permissions.IMMUTABLE[preset.value] || {};
-      let lastInput = null;
-      for (let input of customizer.querySelectorAll("input")) {
-        let type = input.value;
-        if (type in immutable) {
-          input.disabled = true;
-          input.checked = immutable[type];
-        } else {
-          input.checked = perms.allowing(type);
-          input.disabled = false;
-          lastInput = input;
+      this.setupCaps(perms, preset, row);
+
+      customizer.classList.toggle("closed", false);
+      let temp = preset.parentNode.querySelector("input.temp");
+      let contextual = !!temp;
+      customizer.classList.toggle("contextual", contextual);
+      let [ctxLabel, ctxSelect, ctxReset] = customizer.capsContext.querySelectorAll("label, select, .reset");
+      ctxLabel.textContent = _(contextual ? "capsContext" : "caps");
+      ctxReset.textContent = _("Reset");
+      if (contextual) {
+        // contextual settings
+        let entry = (value, label = value) => {
+          let opt = document.createElement("option");
+          opt.value = value;
+          opt.textContent = label;
+          return opt;
         }
-        input.parentNode.classList.toggle("needed", this.siteNeeds(row._site, type));
+        for (let child; child = ctxSelect.firstChild;) child.remove();
+        ctxSelect.appendChild(entry("*", _("anySite")));
+        let ctxSites = row.perms.contextual;
+        if (this.mainDomain) {
+          let key = Sites.optimalKey(this.mainUrl);
+          ctxSelect.appendChild(entry(key, `…${Sites.toExternal(key)}`)).selected = key === row.contextMatch;
+        } else {
+          if (ctxSites) {
+            for (let [site, ctxPerms] of ctxSites.entries()) {
+              let label = Sites.toExternal(site);
+              if (!label.includes(":")) label = `…${label}`;
+              ctxSelect.appendChild(entry(site, label)).selected === perms === ctxPerms;
+            }
+          }
+        }
+        let handleSelection = () => {
+          let selected = ctxSelect.querySelector("option:checked");
+          ctxReset.disabled = !(selected && selected.value !== "*");
+          ctxReset.onclick = () => {
+            let perms = this.policy.get(row.siteMatch).perms;
+            perms.contextual.delete(row.contextMatch);
+            row.permissionsChanged = row._originalPerms && !row.perms.sameAs(row._originalPerms);
+            fireOnChange(this, row);
+            selected.previousElementSibling.selected = true;
+            if (!this.mainDomain) selected.remove();
+            ctxSelect.dispatchEvent(new Event("change"));
+          }
+        }
+        ctxSelect.onchange = e => {
+          let caps = customizer.querySelector(".caps");
+          let pageTurn = caps.cloneNode(true);
+          let s = pageTurn.style;
+          s.top = `${caps.offsetTop}px`;
+          s.left =`${caps.offsetLeft}px`;
+          s.width = `${caps.offsetWidth}px`;
+          s.height = `${caps.offsetHeight}px`;
+          pageTurn.classList.add("pageTurn");
+          caps.parentNode.appendChild(pageTurn);
+          setTimeout(() => pageTurn.classList.add("endgame"), 1);
+          setTimeout(() => pageTurn.remove(), 500);
+          handleSelection();
+        }
+
+        handleSelection();
       }
 
       row.parentNode.insertBefore(customizer, row.nextElementSibling);
-      customizer.classList.toggle("closed", false);
-      let temp = preset.parentNode.querySelector("input.temp");
       customizer.onkeydown = e => {
         if (e.shiftKey) return true;
         switch(e.code) {
@@ -620,7 +717,6 @@ var UI = (() => {
                 setTimeout(() => temp.tabIndex = "-1", 50);
                 preset.focus();
               }
-
             }
             return true;
           case "ArrowLeft":
@@ -640,10 +736,7 @@ var UI = (() => {
             e.stopPropagation();
             return false;
           case "KeyT":
-          {
-            let temp = preset.parentNode.querySelector("input.temp");
             if (temp) temp.checked = !temp.checked || UI.forceIncognito;
-          }
         }
       }
       window.setTimeout(() => customizer.querySelector("input:not(:disabled)").focus(), 50);
@@ -661,7 +754,7 @@ var UI = (() => {
         root.addEventListener("keydown", e => this._keyNavHandler(e), true);
         root.addEventListener("keyup", e => {
           // we use a keyup listener to open the customizer from other presets
-          // because space repetion may lead to unintendedly "click" on the
+          // because space repetition may lead to unintendedly "click" on the
           // first cap checkbox once focused from keydown
           switch(e.code) {
             case "Space": {
@@ -756,8 +849,9 @@ var UI = (() => {
           if (!hasTemp) hasTemp = perms.temp;
         }
       } else {
+        let top = Sites.optimalKey(this.mainUrl);
         for (let site of sites) {
-          let context = null;
+          let context = top;
           if (site.site) {
             site = site.site;
             context = site.context;

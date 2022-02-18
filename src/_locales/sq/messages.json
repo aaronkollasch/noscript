@@ -699,6 +699,18 @@
         "message": "Faqerojtës Formësimi NoScript-i",
         "description": ""
     },
+    "caps": {
+        "message": "Aktivizoji këto aftësi",
+        "description": ""
+    },
+    "capsContext": {
+        "message": "Aktivizoji këto aftësi, kur ka përputhje te faqja e epërme",
+        "description": ""
+    },
+    "anySite": {
+        "message": "ÇFARËDO SAJTI",
+        "description": ""
+    },
     "cap_script": {
         "message": "programth",
         "description": ""
@@ -736,7 +748,11 @@
         "description": ""
     },
     "cap_unchecked_css": {
-        "message": "unrestricted CSS",
+        "message": "CSS e pakufizuar",
+        "description": ""
+    },
+    "cap_lan": {
+        "message": "LAN",
         "description": ""
     },
     "cap_other": {

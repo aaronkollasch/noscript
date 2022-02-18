@@ -699,6 +699,18 @@
         "message": "Tanda Buku Konfigurasi NoScript",
         "description": ""
     },
+    "caps": {
+        "message": "Enable these capabilities",
+        "description": ""
+    },
+    "capsContext": {
+        "message": "Enable these capabilities when top page matches",
+        "description": ""
+    },
+    "anySite": {
+        "message": "ANY SITE",
+        "description": ""
+    },
     "cap_script": {
         "message": "skrip",
         "description": ""
@@ -737,6 +749,10 @@
     },
     "cap_unchecked_css": {
         "message": "unrestricted CSS",
+        "description": ""
+    },
+    "cap_lan": {
+        "message": "LAN",
         "description": ""
     },
     "cap_other": {

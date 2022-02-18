@@ -41,7 +41,7 @@ XSS.InjectionChecker = (async () => {
   const IC_EVAL_PATTERN = "\\b(?:" +
     fuzzify('eval|import|set(?:Timeout|Interval)|(?:f|F)unction|Script|toString|Worker|document|constructor|generateCRMFRequest|jQuery|fetch|write(?:ln)?|__(?:define(?:S|G)etter|noSuchMethod)__|definePropert(?:y|ies)') +
     "|\\$|" + IC_WINDOW_OPENER_PATTERN + ")\\b";
-  const IC_EVENT_PATTERN = "on(?:m(?:o(?:z(?:browser(?:beforekey(?:down|up)|afterkey(?:down|up))|(?:network(?:down|up)loa|accesskeynotfoun)d|showdropdown(?:_sourcetouch)?|pointerlock(?:change|error)|(?:orientation|time)change|fullscreen(?:change|error)|visual(?:resize|scroll)|interrupt(?:begin|end)|key(?:down|up)onplugin)|use(?:l(?:ongtap|eave)|o(?:ver|ut)|enter|wheel|down|move|up))|a(?:p(?:se(?:tmessagestatus|ndmessage)|message(?:slisting|update)|folderlisting|getmessage)req|rk)|e(?:rchantvalidation|ssage(?:error)?|tadatachange)|(?:idimessag|ut)e)|p(?:o(?:inter(?:l(?:ock(?:change|error)|eave)|o(?:ver|ut)|cancel|enter|down|move|up)|p(?:up(?:hid(?:den|ing)|show(?:ing|n)|positioned)|state)|sitionstatechange)|a(?:i(?:ring(?:con(?:firmation|sent)req|aborted)|nt)|(?:y(?:mentmethod|erdetail)chang|st|us)e|ge(?:hide|show))|u(?:ll(?:vcard(?:listing|entry)|phonebook)req|sh(?:subscriptionchange)?)|r(?:o(?:cessorerror|gress)|intPreviewUpdate)|lay(?:backstatechange|ing)?|(?:[is]|ending|ty)change|hoto)|Moz(?:DOM(?:Fullscreen_(?:E(?:xit(?:ed)?|ntered)|NewOrigin|Request)|PointerLock_E(?:nter|xit)ed)|S(?:wipeGesture(?:(?:May)?Start|Update|End)?|(?:essionStorage|crolledArea)Changed)|M(?:agnifyGesture(?:Update|Start)?|ouse(?:PixelScroll|Hittest))|(?:EdgeUI(?:C(?:omplet|ancel)|Start)|LocalStorageChang)ed|(?:T(?:ogglePictureInPic|apGes)|PressTapGes)ture|A(?:pplicationManifes|fterPain)t|RotateGesture(?:Update|Start)?|OpenDateTimePicker|InvalidForm)|DOM(?:(?:C(?:haracterDataModifi|ontentLoad)|Link(?:Chang|Add)|DocElementInsert|InputPasswordAdd|HeadElementPars|SubtreeModifi|PopupBlock|TitleChang)ed|F(?:o(?:rm(?:BeforeSubmit|HasPassword)|cus(?:Out|In))|rameContentLoaded)|Node(?:Inserted(?:IntoDocument)?|Removed(?:FromDocument)?)|M(?:eta(?:Chang|Remov|Add)ed|ouseScroll)|A(?:(?:utoComple|ctiva)te|ttrModified)|Window(?:C(?:reated|lose)|Focus))|s(?:t(?:a(?:t(?:uschanged|echange)|lled|rt)|o(?:rage(?:areachanged)?|p)|k(?:sessione|comma)nd)|e(?:lect(?:ionchange|start|end)?|ek(?:ing|ed)|n(?:ding|t)|t)|c(?:(?:anningstate|ostatus)changed|roll(?:end)?)|ou(?:rce(?:closed?|ended|open)|nd(?:start|end))|pe(?:akerforcedchange|ech(?:start|end))|u(?:pportedkeyschange|ccess|spend|bmit)|h(?:ipping(?:address|option)change|ow)|queeze(?:start|end)?)|c(?:o(?:n(?:nect(?:i(?:on(?:statechanged|available)|ng)|ed)?|t(?:rollerchange|extmenu))|m(?:p(?:osition(?:update|start|end)|lete)|mand(?:update)?)|py)|h(?:a(?:r(?:ging(?:time)?change|acteristicchanged)|nge)|ecking)|a(?:n(?:play(?:through)?|cel)|(?:llschang|ch)ed|rdstatechange)|u(?:rrent(?:channel|source)changed|echange|t)|l(?:i(?:rmodechange|ck)|ose)|fstatechange)|d(?:e(?:vice(?:p(?:roximity|aired)|(?:orienta|mo)tion|(?:unpaire|foun)d|change|light)|l(?:ivery(?:success|error)|eted)|activated)|i(?:s(?:c(?:hargingtimechange|onnect(?:ing|ed)?)|playpasskeyreq|abled)|aling)|r(?:a(?:g(?:e(?:n(?:ter|d)|xit)|(?:gestur|leav)e|start|drop|over)?|in)|op)|ata(?:(?:availabl|chang)e|error)?|urationchange|ownloading|blclick)|a(?:n(?:imation(?:iteration|cancel|start|end)|tennaavailablechange)|d(?:d(?:sourcebuffer|track)|apter(?:remov|add)ed)|ttribute(?:(?:write|read)req|changed)|u(?:dio(?:process|start|end)|xclick)|b(?:solutedeviceorientation|ort)|(?:2dpstatuschang|ppinstall)ed|ctiv(?:estatechanged|ated?)|fter(?:scriptexecute|print)|lerting)|r(?:e(?:s(?:ourcetimingbufferfull|u(?:m(?:ing|e)|lt)|ponseprogress|ize|et)|mo(?:ve(?:sourcebuffer|track)?|te(?:resume|hel)d)|ad(?:y(?:statechange)?|success|error)|quest(?:mediaplaystatu|progres)s|(?:jectionhandl|ceiv)ed|pea(?:tEven)?t|loadpage|trieving)|(?:(?:adiost)?ate|t)change|ds(?:dis|en)abled)|b(?:e(?:fore(?:(?:evicte|unloa)d|p(?:aste|rint)|scriptexecute|c(?:opy|ut)|input)|gin(?:Event)?)|oun(?:d(?:schange|ary)|ce)|u(?:fferedamountlow|sy)|l(?:ocked|ur)|roadcast)|w(?:eb(?:kit(?:Animation(?:Iteration|Start|End)|animation(?:iteration|start|end)|(?:TransitionE|transitione)nd)|socket)|a(?:iting(?:forkey)?|rning)|heel)|v(?:rdisplay(?:(?:presentchang|activat)e|d(?:eactivate|isconnect)|connect)|o(?:ice(?:schanged|change)|lumechange)|(?:isibility|ersion)change)|u(?:n(?:handledrejection|capturederror|derflow|load|mute)|p(?:date(?:(?:fou|e)nd|ready|start)?|gradeneeded)|s(?:erproximity|sdreceived))|t(?:o(?:uch(?:cancel|start|move|end)|(?:nechang|ggl)e)|ransition(?:cancel|start|end|run)|ime(?:update|out)|e(?:rminate|xt)|ypechange)|e(?:n(?:ter(?:pincodereq)?|(?:crypt|abl)ed|d(?:Event|ed)?)|m(?:ergencycbmodechange|ptied)|(?:itbroadcas|vic)ted|rror|xit)|l(?:o(?:ad(?:e(?:d(?:meta)?data|nd)|ing(?:error|done)?|start)?|stpointercapture)|(?:anguage|evel)change)|o(?:(?:(?:rientation|tastatus)chang|(?:ff|n)lin)e|b(?:expasswordreq|solete)|verflow(?:changed)?|pen)|g(?:amepad(?:(?:dis)?connected|button(?:down|up)|axismove)|(?:otpointercaptur|roupchang)e|et)|f(?:o(?:cus(?:out|in)?|rmdata)|ullscreen(?:change|error)|requencychange|(?:inis|etc)h|ailed)|i(?:n(?:put(?:sourceschange)?|coming|stall|valid)|cc(?:(?:info)?change|(?:un)?detected))|P(?:lugin(?:(?:BindingAttac|Cras)h|(?:Instanti|Outd)at|Remov)ed|rintingError)|U(?:AWidget(?:SetupOrChange|Teardown)|nselectedTabHover_(?:Dis|En)able)|h(?:(?:fp|id)statuschanged|e(?:adphoneschange|ld)|ashchange|olding)|(?:(?:GloballyAutoplayBlock|ImageContentLoad)e|AppComman|Loa)d|n(?:o(?:tificationcl(?:ick|ose)|update|match)|ewrdsgroup)|Check(?:KeyPressEventModel|boxStateChange)|SVG(?:(?:Unl|L)oad|Resize|Scroll|Zoom)|key(?:statuseschange|press|down|up)|R(?:adioStateChange|equest)|ZoomChangeUsingMouseWheel|(?:Full|Text)ZoomChange|HiddenPlugin|zoom)"
+  const IC_EVENT_PATTERN = "on(?:m(?:o(?:z(?:browser(?:beforekey(?:down|up)|afterkey(?:down|up))|(?:network(?:down|up)loa|accesskeynotfoun)d|showdropdown(?:_sourcetouch)?|pointerlock(?:change|error)|(?:orientation|time)change|fullscreen(?:change|error)|visual(?:resize|scroll)|interrupt(?:begin|end)|key(?:down|up)onplugin)|use(?:l(?:ongtap|eave)|o(?:ver|ut)|enter|wheel|down|move|up))|a(?:p(?:se(?:tmessagestatus|ndmessage)|message(?:slisting|update)|folderlisting|getmessage)req|rk)|e(?:rchantvalidation|ssage(?:error)?|tadatachange)|(?:idimessag|ut)e)|Moz(?:DOM(?:Fullscreen_(?:E(?:xit(?:ed)?|ntered)|NewOrigin|Request)|PointerLock_E(?:nter|xit)ed)|S(?:wipeGesture(?:(?:May)?Start|Update|End)?|(?:essionStorage|crolledArea)Changed)|M(?:ouse(?:ExploreByTouch|PixelScroll|Hittest)|agnifyGesture(?:Update|Start)?)|(?:EdgeUI(?:C(?:omplet|ancel)|Start)|LocalStorageChang)ed|(?:T(?:ogglePictureInPic|apGes)|PressTapGes)ture|A(?:pplicationManifes|fterPain)t|RotateGesture(?:Update|Start)?|OpenDateTimePicker|InvalidForm)|p(?:o(?:inter(?:l(?:ock(?:change|error)|eave)|o(?:ver|ut)|cancel|enter|down|move|up)|p(?:up(?:hid(?:den|ing)|show(?:ing|n)|positioned)|state)|sitionstatechange)|a(?:i(?:ring(?:con(?:firmation|sent)req|aborted)|nt)|(?:y(?:mentmethod|erdetail)chang|st|us)e|ge(?:hide|show))|u(?:ll(?:vcard(?:listing|entry)|phonebook)req|sh(?:subscriptionchange)?)|r(?:o(?:cessorerror|gress)|intPreviewUpdate)|lay(?:backstatechange|ing)?|(?:[is]|ending|ty)change|hoto)|s(?:t(?:a(?:t(?:uschanged|echange)|lled|rt)|o(?:rage(?:areachanged)?|p)|k(?:sessione|comma)nd)|e(?:lect(?:ionchange|start|end)?|curitypolicyviolation|ek(?:ing|ed)|n(?:ding|t)|t)|c(?:(?:anningstate|ostatus)changed|roll(?:end)?)|ou(?:rce(?:closed?|ended|open)|nd(?:start|end))|pe(?:akerforcedchange|ech(?:start|end))|u(?:pportedkeyschange|ccess|spend|bmit)|h(?:ipping(?:address|option)change|ow)|queeze(?:start|end)?|ystemstatusbarclick|lotchange)|DOM(?:(?:C(?:haracterDataModifi|ontentLoad)|Link(?:Chang|Add)|DocElementInsert|InputPasswordAdd|HeadElementPars|SubtreeModifi|PopupBlock|TitleChang)ed|F(?:o(?:rm(?:BeforeSubmit|HasPassword)|cus(?:Out|In))|rameContentLoaded)|Node(?:Inserted(?:IntoDocument)?|Removed(?:FromDocument)?)|M(?:eta(?:Chang|Remov|Add)ed|ouseScroll)|A(?:(?:utoComple|ctiva)te|ttrModified)|Window(?:C(?:reated|lose)|Focus))|c(?:o(?:n(?:nect(?:i(?:on(?:statechanged|available)|ng)|ed)?|t(?:ext(?:restored|lost|menu)|rollerchange))|m(?:p(?:osition(?:update|start|end)|lete)|mand(?:update)?)|py)|h(?:a(?:r(?:ging(?:time)?change|acteristicchanged)|nge)|ecking)|a(?:n(?:play(?:through)?|cel)|(?:llschang|ch)ed|rdstatechange)|u(?:rrent(?:channel|source)changed|echange|t)|l(?:i(?:rmodechange|ck)|ose)|fstatechange)|d(?:e(?:vice(?:p(?:roximity|aired)|(?:orienta|mo)tion|(?:unpaire|foun)d|change|light)|l(?:ivery(?:success|error)|eted)|activated)|i(?:s(?:c(?:hargingtimechange|onnect(?:ing|ed)?)|playpasskeyreq|abled)|aling)|r(?:a(?:g(?:e(?:n(?:ter|d)|xit)|(?:gestur|leav)e|start|drop|over)?|in)|op)|ata(?:(?:availabl|chang)e|error)?|urationchange|ownloading|blclick)|a(?:n(?:imation(?:iteration|cancel|start|end)|tennaavailablechange)|d(?:d(?:sourcebuffer|track)|apter(?:remov|add)ed)|ttribute(?:(?:write|read)req|changed)|u(?:dio(?:process|start|end)|xclick)|b(?:solutedeviceorientation|ort)|(?:2dpstatuschang|ppinstall)ed|ctiv(?:estatechanged|ated?)|fter(?:scriptexecute|print)|lerting)|r(?:e(?:s(?:ourcetimingbufferfull|u(?:m(?:ing|e)|lt)|ponseprogress|ize|et)|mo(?:ve(?:sourcebuffer|track)?|te(?:resume|hel)d)|ad(?:y(?:statechange)?|success|error)|quest(?:mediaplaystatu|progres)s|(?:jectionhandl|ceiv)ed|pea(?:tEven)?t|loadpage|trieving)|(?:(?:adiost)?ate|t)change|ds(?:dis|en)abled)|b(?:e(?:fore(?:(?:evicte|unloa)d|p(?:aste|rint)|scriptexecute|c(?:opy|ut)|input)|gin(?:Event)?)|oun(?:d(?:schange|ary)|ce)|u(?:fferedamountlow|sy)|l(?:ocked|ur)|roadcast)|w(?:eb(?:kit(?:Animation(?:Iteration|Start|End)|animation(?:iteration|start|end)|(?:TransitionE|transitione)nd)|socket)|a(?:iting(?:forkey)?|rning)|heel)|v(?:rdisplay(?:(?:presentchang|activat)e|d(?:eactivate|isconnect)|connect)|o(?:ice(?:schanged|change)|lumechange)|(?:isibility|ersion)change)|u(?:n(?:handledrejection|capturederror|derflow|load|mute)|p(?:date(?:(?:fou|e)nd|ready|start)?|gradeneeded)|s(?:erproximity|sdreceived))|t(?:o(?:uch(?:cancel|start|move|end)|(?:nechang|ggl)e)|ransition(?:cancel|start|end|run)|ime(?:update|out)|e(?:rminate|xt)|ypechange)|e(?:n(?:ter(?:pincodereq)?|(?:crypt|abl)ed|d(?:Event|ed)?)|m(?:ergencycbmodechange|ptied)|(?:itbroadcas|vic)ted|rror|xit)|l(?:o(?:ad(?:e(?:d(?:meta)?data|nd)|ing(?:error|done)?|start)?|stpointercapture)|(?:anguage|evel)change)|o(?:(?:(?:rientation|tastatus)chang|(?:ff|n)lin)e|b(?:expasswordreq|solete)|verflow(?:changed)?|pen)|g(?:amepad(?:(?:dis)?connected|button(?:down|up)|axismove)|(?:otpointercaptur|roupchang)e|et)|f(?:o(?:cus(?:out|in)?|rmdata)|ullscreen(?:change|error)|requencychange|(?:inis|etc)h|ailed)|i(?:n(?:put(?:sourceschange)?|coming|stall|valid)|cc(?:(?:info)?change|(?:un)?detected))|P(?:lugin(?:(?:BindingAttac|Cras)h|(?:Instanti|Outd)at|Remov)ed|rintingError)|U(?:AWidget(?:SetupOrChange|Teardown)|nselectedTabHover_(?:Dis|En)able)|h(?:(?:fp|id)statuschanged|e(?:adphoneschange|ld)|ashchange|olding)|(?:(?:GloballyAutoplayBlock|ImageContentLoad)e|AppComman|Loa)d|n(?:o(?:tificationcl(?:ick|ose)|update|match)|ewrdsgroup)|Check(?:KeyPressEventModel|boxStateChange)|SVG(?:(?:Unl|L)oad|Resize|Scroll|Zoom)|key(?:statuseschange|press|down|up)|R(?:adioStateChange|equest)|ZoomChangeUsingMouseWheel|(?:Full|Text)ZoomChange|HiddenPlugin|zoom)"
   // autogenerated from Mozilla's source code, see html5_events/html5_events.pl
   ;
   const IC_EVENT_DOS_PATTERN =
@@ -49,7 +49,7 @@ XSS.InjectionChecker = (async () => {
     "|\\b(?:" + IC_WINDOW_OPENER_PATTERN + ")\\b[^]+\\b(?:" + IC_EVENT_PATTERN + ")[^]*=";
 
   function InjectionChecker() {
-    this.timing = new Timing();
+    this.timing = new Timing(20);
     this.reset();
   }
   InjectionChecker.prototype = {
@@ -346,7 +346,7 @@ XSS.InjectionChecker = (async () => {
     _arrayAccessRx: /\s*\[\d+\]/g,
 
     // inc/dec/self-modifying assignments on DOM props or special properties in object literals via Symbol
-    _riskyOperatorsRx: /(?:\+\+|--)\s*(?:\/[*/][\s\S]+)?(?:[$\w]+(?:\/[*/][\s\S]+)?(?:\[|.\D)|location)|(?:\]|\.\D*(?:\/[*/][\s\S]+)?[$\w]+|location)\s*(?:\/[*/][\s\S]+)?(\+\+|--|[+*\/<>~-]+\s*(?:\/[*/][\s\S]+)?=)|\{[^]*\[[^]*Symbol[^]*(?:\.\D|\[)[^]*:/,
+    _riskyOperatorsRx: /(?:\+\+|--)\s*(?:\/[*/][\s\S]+)?(?:(?:\$|\w{3,})(?:\/[*/][\s\S]+)?(?:\[|\.\D)|location)|(?:\]|(?:\$|\w{3,})(?:\/[*/][\s\S]+)?\.[^]+|location)\s*(?:\/[*/][\s\S]+)?(\+\+|--|[+*\/<>~-]+\s*(?:\/[*/][\s\S]+)?=)|\{[^]*\[[^]*Symbol[^]*(?:\.\D|\[)[^]*:/,
 
     _assignmentRx: /^(?:[^()="'\s]+=(?:[^(='"\[+]+|[?a-zA-Z_0-9;,&=/]+|[\d.|]+))$/,
     _badRightHandRx: /=[\s\S]*(?:_QS_\b|[|.][\s\S]*source\b|<[\s\S]*\/[^>]*>)/,
@@ -484,8 +484,12 @@ XSS.InjectionChecker = (async () => {
       var m = fn.toString().match(/\{([\s\S]*)\}/);
       if (!m) return false;
       var expr = this.stripLiteralsAndComments(m[1]);
-      return /=[\s\S]*cookie|\b(?:setter|document|location|(?:inn|out)erHTML|\.\W*src)[\s\S]*=|[\w$\u0080-\uffff\)\]]\s*[\[\(]/.test(expr) ||
+      let ret =  /=[\s\S]*cookie|\b(?:setter|document|location|(?:inn|out)erHTML|\.\W*src)[\s\S]*=|[\w$\u0080-\uffff\)\]]\s*[\[\(]/.test(expr) ||
         this.maybeJS(expr);
+      if (ret) {
+        this.escalate(`${expr} has been flagged as dangerous JS (${RegExp.lastMatch})`);
+      }
+      return ret;
     },
 
     _createInvalidRanges: function() {
@@ -493,42 +497,50 @@ XSS.InjectionChecker = (async () => {
         return '\\u' + ("0000" + n.toString(16)).slice(-4);
       }
 
-      var ret = "";
-      var first = -1;
-      var last = -1;
-      var cur = 0x7e;
-      while (cur++ <= 0xffff) {
+      let chunks = [];
+      let first = -1;
+      let last = -1;
+      let cur = 0x7e;
+      let close = () => { if (last != first) chunks.push(`-${x(last)}`); }
+      while (cur++ < 0xffff) {
         try {
-          eval("var _" + String.fromCharCode(cur) + "_=1");
+           Function(`let _${String.fromCharCode(cur)}_`);
         } catch (e) {
           if (!/illegal char/.test(e.message)) continue;
           if (first == -1) {
             first = last = cur;
-            ret += x(cur);
+            chunks.push(x(cur));
             continue;
           }
           if (cur - last == 1) {
             last = cur;
             continue;
           }
-
-          if (last != first) ret += "-" + x(last);
-          ret += x(cur);
+          close();
+          chunks.push(x(cur));
           last = first = cur;
         }
       }
-      return ret;
+      close();
+      return chunks.join('');
     },
 
     get invalidCharsRx() {
-      let value = new RegExp("^[^\"'`/<>]*[" + this._createInvalidRanges() + "]");
+      let preamble = "^[^\"'`/<>]*";
+      let value;
+      try {
+        // see https://mathiasbynens.be/notes/javascript-identifiers-es6#acceptable-unicode-symbols
+        value = new RegExp(preamble + "[^$_\\p{ID_Start}\\p{ID_Continue}\\u200c\\u200d\\u2028\\u2029]", "u");
+      } catch (e) {
+        // Unicode entities are not supported in Gecko <= 77
+        value = new RegExp(preamble + `[${this._createInvalidRanges()}]`, "u");
+      }
       Object.defineProperty(Object.getPrototypeOf(this), 'invalidCharsRx', {value});
       return value;
     },
 
     async checkJSBreak(s) {
       // Direct script injection breaking JS string literals or comments
-
       //  preliminarily cleanup most urlencoded noise and reduce JSON/XML
       s = ';' + this.reduceXML(await this.reduceJSON(this.collapseChars(
         s.replace(/\%\d+[a-z\(]\w*/gi, '§')
@@ -775,7 +787,6 @@ XSS.InjectionChecker = (async () => {
 
     async checkJS(s, unescapedUni) {
       this.log(s);
-
       if (/[=\(](?:[\s\S]*(?:\?name\b[\s\S]*:|[^&?]\bname\b)|name\b)/.test(s)) {
         this.nameAssignment = true;
       }
@@ -883,7 +894,7 @@ XSS.InjectionChecker = (async () => {
           l = l.replace(/[^=]*=\s*/i, '').replace(/[\u0000-\u001f]/g, '');
           l = /^["']/.test(l) ? l.replace(/^(['"])([^]*?)\1[^]*/g, '$2') : l.replace(/[\s>][^]*/, '');
 
-          if (/^(?:javascript|data):|\[[^]+\]/i.test(l) || /[<'"(]/.test(unescape(l)) && await this.checkUrl(l)) return true;
+          if (/^(?:javascript|data):/i.test(l) || /[<'"([]/.test(unescape(l)) && await this.checkUrl(l)) return true;
         }
       }
       return this._rxCheck("HTML", s) || this._rxCheck("Globals", s);

@@ -524,6 +524,15 @@
   "bookmarkSync_title": {
     "message": "NoScript Configuration Bookmark"
   },
+  "caps": {
+    "message": "Enable these capabilities"
+  },
+  "capsContext": {
+    "message": "Enable these capabilities when top page matches"
+  },
+  "anySite": {
+    "message": "ANY SITE"
+  },
   "cap_script": {
     "message": "script"
   },
@@ -553,6 +562,9 @@
   },
   "cap_unchecked_css": {
     "message": "unrestricted CSS"
+  },
+  "cap_lan": {
+    "message": "LAN"
   },
   "cap_other": {
     "message": "other"

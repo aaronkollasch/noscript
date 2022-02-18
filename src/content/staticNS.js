@@ -53,7 +53,7 @@
       backlog.add(eventName);
     },
 
-    fetchPolicy() {
+    fetchPolicy(sync = false) {
       if (this.policy) return;
       let url = document.URL;
 
@@ -72,46 +72,68 @@
         }
       }
 
-      if (/^(?:ftp|file):/.test(url)) { // ftp: or file: - no CSP headers yet
-        if (this.syncFetchPolicy) {
-          this.syncFetchPolicy();
-        } else { // additional content scripts not loaded yet
-          log("Waiting for syncFetchPolicy to load...");
-          this.pendingSyncFetchPolicy = true;
-          return;
-        }
-      } else {
-        // CSP headers have been already provided by webRequest, we are not in a hurry...
-        if (url.startsWith("blob:")) {
-          url = location.origin;
-        } else if (/^(?:javascript|about):/.test(url)) {
-          url = document.readyState === "loading"
-          ? document.baseURI
-          : `${window.isSecureContext ? "https" : "http"}://${document.domain}`;
-          debug("Fetching policy for actual URL %s (was %s)", url, document.URL);
-        }
-        let asyncFetch = async () => {
-          try {
-            policy = await Messages.send("fetchChildPolicy", {url, contextUrl: url});
-          } catch (e) {
-            error(e, "Error while fetching policy");
-          }
-          if (policy === undefined) {
-            let delay = 300;
-            log(`Policy was undefined, retrying in ${delay}ms...`);
-            setTimeout(asyncFetch, delay);
-            return;
+      if (this.syncFetchPolicy) {
+        // extra hops to ensure that scripts don't run when CSP has not been set through HTTP headers
+        this.syncFetchPolicy();
+        return;
+      }
+
+      this.pendingSyncFetchPolicy = true;
+
+      if (!sync) {
+        queueMicrotask(() => this.fetchPolicy(true));
+        return;
+      }
+
+      if (url.startsWith("blob:")) {
+        url = location.origin;
+      } else if (/^(?:javascript|about):/.test(url)) {
+        url = document.readyState === "loading" || !document.domain
+        ? document.baseURI
+        : `${window.isSecureContext ? "https" : "http"}://${document.domain}`;
+        debug("Fetching policy for actual URL %s (was %s)", url, document.URL);
+      }
+
+      if (!this.syncFetchPolicy) {
+
+        let msg = {id: "fetchChildPolicy", url};
+
+        let asyncFetch = (async () => {
+          let policy = null;
+          for (let attempts = 10; !(policy || this.policy) && attempts-- > 0;) {
+            try {
+              debug(`Retrieving policy asynchronously (${attempts} attempts left).`);
+              policy = await Messages.send(msg.id, msg) || this.domPolicy;
+              debug("Asynchronous policy", policy);
+            } catch (e) {
+              error(e, "(Asynchronous policy fetch)");
+            }
           }
           this.setup(policy);
-        }
-        asyncFetch();
-        return;
+        });
+        debug(`Synchronously fetching policy for ${url}.`);
+        let policy = null;
+        let attempts = 100;
+        let refetch = () => {
+          policy = browser.runtime.sendSyncMessage(msg) || this.domPolicy;
+          if (policy) {
+            this.setup(policy);
+          } else if (attempts-- > 0) {
+            debug(`Couldn't retrieve policy synchronously (${attempts} attempts left).`);
+            if (asyncFetch) {
+              asyncFetch();
+              asyncFetch = null;
+            }
+            queueMicrotask(refetch);
+          }
+        };
+        refetch();
       }
     },
 
     setup(policy) {
       if (this.policy) return false;
-      debug("%s, %s, fetched %o", document.URL, document.readyState, policy);
+      debug("%s, %s, fetched %o", document.URL, document.readyState, policy, new Error().stack); // DEV_ONLY
       if (!policy) {
         policy = {permissions: {capabilities: []}, localFallback: true};
       }

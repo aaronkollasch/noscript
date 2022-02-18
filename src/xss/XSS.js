@@ -74,12 +74,11 @@ var XSS = (() => {
 
   async function requestListener(request) {
 
-    if (ns.isEnforced(request.tabId)) {
-      let {policy} = ns;
+    {
       let {type} = request;
       if (type !== "main_frame") {
         if (type === "sub_frame") type = "frame";
-        if (!policy.can(request.url, type, request.originUrl)) {
+        if (!ns.requestCan(request, type)) {
           return ALLOW; // it will be blocked by RequestGuard
         }
       }
@@ -118,10 +117,14 @@ var XSS = (() => {
 
       if (reasons.protectName) {
         await include("/nscl/service/ContentScriptOnce.js");
-        await ContentScriptOnce.execute(request, {
-          js: [{file: "/xss/sanitizeName.js"}],
-        });
-        if (!block) return ALLOW;
+        try {
+          await ContentScriptOnce.execute(request, {
+            js: [{file: "/xss/sanitizeName.js"}],
+          });
+          if (!block) return ALLOW;
+        } catch (e) {
+          error(e, "Sanitizing name in request", request.url);
+        }
       }
       if (reasons.urlInjection) data.push(`(URL) ${unescapedDest}`);
       if (reasons.postInjection) data.push(`(POST) ${reasons.postInjection}`);

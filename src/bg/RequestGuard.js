@@ -1,7 +1,7 @@
 /*
  * NoScript - a Firefox extension for whitelist driven safe JavaScript execution
  *
- * Copyright (C) 2005-2021 Giorgio Maone <https://maone.net>
+ * Copyright (C) 2005-2022 Giorgio Maone <https://maone.net>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -54,10 +54,21 @@ var RequestGuard = (() => {
         origins: new Set(),
       }
     },
-    hasOrigin(tabId, origin) {
+    hasOrigin(tabId, url) {
       let records = this.map.get(tabId);
-      return records && records.origins.has(origin);
+      return records && records.origins.has(Sites.origin(url));
     },
+    addOrigin(tabId, url) {
+      if (tabId < 0) return;
+      let origin = Sites.origin(url);
+      if (!origin) return;
+      let {origins} = this.map.get(tabId) || this.initTab(tabId);
+      if (!origins.has(origin)) {
+        origins.add(origin);
+        this._originsCache.clear();
+      }
+    },
+
     findTabsByOrigin(origin) {
       let tabIds = this._originsCache.get(origin);
       if (!tabIds) {
@@ -78,7 +89,7 @@ var RequestGuard = (() => {
       let {tabId, frameId, type, url, documentUrl} = request;
       let policyType = policyTypesMap[type] || type;
       let requestKey = Policy.requestKey(url, policyType, documentUrl);
-      let map = this.map;
+      let {map} = this;
       let records = map.has(tabId) ?  map.get(tabId) : this.initTab(tabId);
       if (what === "noscriptFrame" && type !== "object") {
         let nsf = records.noscriptFrames;
@@ -90,8 +101,9 @@ var RequestGuard = (() => {
         }
       }
       if (type.endsWith("frame")) {
-        records.origins.add(Sites.origin(url));
-        TabStatus._originsCache.clear();
+        this.addOrigin(tabId, url);
+      } else if (documentUrl) {
+        this.addOrigin(tabId, documentUrl);
       }
       let collection = records[what];
       if (collection) {
@@ -249,16 +261,17 @@ var RequestGuard = (() => {
       if (!key) return;
       let cookieStoreId = sender.tab && sender.tab.cookieStoreId;
       let policy = ns.getPolicy(cookieStoreId);
-      let {siteMatch, contextMatch, perms} = policy.get(key, documentUrl);
+      let contextUrl = sender.tab.url || documentUrl;
+      let {siteMatch, contextMatch, perms} = policy.get(key, contextUrl);
       let {capabilities} = perms;
       if (!capabilities.has(policyType)) {
         let temp = sender.tab.incognito; // we don't want to store in PBM
         perms = new Permissions(new Set(capabilities), temp);
         perms.capabilities.add(policyType);
         /* TODO: handle contextual permissions
-        if (documentUrl) {
-          let context = new URL(documentUrl).origin;
-          let contextualSites = new Sites([context, perms]);
+        if (contextUrl) {
+          let context = Sites.optimalKey(contextUrl);
+          let contextualSites = new Sites([[context, perms]]);
           perms = new Permissions(new Set(capabilities), false, contextualSites);
         }
         */
@@ -398,12 +411,65 @@ var RequestGuard = (() => {
          : 0;
     }
   };
+
+
+  function blockLANRequest(request) {
+    debug("WAN->LAN request blocked", request);
+    let r = Object.assign({}, request);
+    r.url = request.originUrl; // we want to report the origin as needing the permission
+    Content.reportTo(r, false, "lan")
+    return ABORT;
+  }
+
+  function checkLANRequest(request) {
+    if (request._lanChecked) return false;
+    request._lanChecked = true;
+    let {originUrl, url, cookieStoreId} = request;
+    let policy = ns.getPolicy(cookieStoreId);
+    if (originUrl && !Sites.isInternal(originUrl) && url.startsWith("http") &&
+      !policy.can(originUrl, "lan", ns.policyContext(request))) {
+      // we want to block any request whose origin resolves to at least one external WAN IP
+      // and whose destination resolves to at least one LAN IP
+      let neverDNS = ns.local.isTorBrowser || !(UA.isMozilla && DNS.supported);
+      if (neverDNS) {
+        // On Chromium we must do it synchronously: we need to sacrifice DNS resolution and check just numeric addresses :(
+        // (the Tor Browser, on the other hand, does DNS resolution and boundary checks on its own and breaks the DNS API)
+        return iputil.isLocalURI(url, false, neverDNS) && !iputil.isLocalURI(originUrl, true, neverDNS)
+          ? blockLANRequest(request)
+          : false;
+      }
+      // Firefox does support asynchronous webRequest: let's return a Promise and perform DNS resolution.
+      return new Promise(async (resolve, reject) => {
+        try {
+          resolve(await iputil.isLocalURI(url, false) && !(await iputil.isLocalURI(originUrl, true))
+            ? blockLANRequest(request)
+            : listeners.onBeforeRequest(request)
+          );
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }
+  }
+
   const listeners = {
     onBeforeRequest(request) {
+      if (browser.runtime.onSyncMessage && browser.runtime.onSyncMessage.isMessageRequest(request)) return ALLOW;
       normalizeRequest(request);
       try {
-        let redirected = initPendingRequest(request);
-        let {type} = request;
+
+        let {tabId} = request;
+        let enforced = ns.isEnforced(tabId);
+
+        if (enforced) {
+          let lanResponse = checkLANRequest(request);
+          if (lanResponse)  return lanResponse;
+        }
+
+        initPendingRequest(request);
+
+        let {type, url, originUrl} = request;
+
         if (type in policyTypesMap) {
           let previous = recent.find(request);
           if (previous) {
@@ -414,15 +480,20 @@ var RequestGuard = (() => {
           recent.add(previous);
 
           let policyType = policyTypesMap[type];
-          let {url, originUrl, documentUrl, tabId, cookieStoreId} = request;
+          let {documentUrl} = request;
+          if (!enforced) {
+            if (ns.unrestrictedTabs.has(tabId) && type.endsWith("frame") && url.startsWith("https:")) {
+              TabStatus.addOrigin(tabId, url);
+            }
+            return ALLOW;
+          }
+          let {cookieStoreId} = request;
           let isFetch = "fetch" === policyType;
           let policy = ns.getPolicy(cookieStoreId);
 
           if ((isFetch || "frame" === policyType) &&
-              (((isFetch && (!originUrl ||
-                browser.runtime.onSyncMessage &&
-                url.includes(browser.runtime.onSyncMessage.ENDPOINT_PREFIX)
-                ) || url === originUrl) && originUrl === documentUrl
+              (((isFetch && !originUrl
+                || url === originUrl) && originUrl === documentUrl
                 // some extensions make them both undefined,
                 // see https://github.com/eight04/image-picka/issues/150
               ) ||
@@ -439,12 +510,9 @@ var RequestGuard = (() => {
 
           let allowed = Sites.isInternal(url);
           if (!allowed) {
-            if (tabId < 0 && documentUrl && documentUrl.startsWith("https://")) {
-              let origin = Sites.origin(documentUrl);
+            if (tabId < 0 && documentUrl && documentUrl.startsWith("https:")) {
               allowed = [...ns.unrestrictedTabs]
-                .some(tabId => TabStatus.hasOrigin(tabId, origin));
-            } else {
-              allowed = !ns.isEnforced(tabId);
+                .some(tabId => TabStatus.hasOrigin(tabId, documentUrl));
             }
             if (!allowed) {
               let capabilities = intersectCapabilities(
@@ -525,7 +593,7 @@ var RequestGuard = (() => {
         let capabilities;
         if (ns.isEnforced(tabId)) {
           let policy = ns.getPolicy(cookieStoreId);
-          let perms = policy.get(url, documentUrl).perms;
+          let {perms} = policy.get(url, ns.policyContext(request));
           if (isMainFrame) {
             if (policy.autoAllowTop && perms === policy.DEFAULT) {
               policy.set(Sites.optimalKey(url), perms = policy.TRUSTED.tempTwin);
@@ -650,7 +718,7 @@ var RequestGuard = (() => {
     policy.navigationURL = url;
     let debugStatement = ns.local.debug ? `
       let mark = Date.now() + ":" + Math.random();
-      console.debug("domPolicy", domPolicy, document.readyState, mark);` : '';
+      console.debug("domPolicy", domPolicy, document.readyState, location.href, mark, window.ns);` : '';
     return `
       let domPolicy = ${JSON.stringify(policy)};
       let {ns} = window;
@@ -658,9 +726,7 @@ var RequestGuard = (() => {
         ns.domPolicy = domPolicy;
         if (ns.setup) {
           if (ns.syncSetup) ns.syncSetup(domPolicy);
-          else if (!ns.pendingSyncFetchPolicy) {
-            ns.setup(domPolicy);
-          }
+          else ns.setup(domPolicy);
         } ;
       } else {
         window.ns = {domPolicy}

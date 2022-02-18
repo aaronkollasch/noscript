@@ -120,14 +120,6 @@ html.tor .tor, html:not(.tor) .not-tor {
     padding: 1em;
   }
 
-  .customizer-controls fieldset {
-    padding-top: 3em !important;
-  }
-
-  .customizer-controls fieldset legend {
-    top: 2em;
-  }
-
   #sites .customizing input.preset:checked + label {
     text-align:right !important;
     padding-right: 1em !important;
@@ -161,6 +153,26 @@ html.tor .tor, html:not(.tor) .not-tor {
   margin-bottom: 0 !important;
 }
 
+.capsContext select {
+  display: none;
+}
+
+.contextual .capsContext select {
+  display: initial;
+}
+
+.pageTurn {
+  position: absolute;
+  outline: 3px solid #888;
+  z-index: 1000;
+  background-color: white;
+  transform-origin: bottom center;
+  transition: transform .5s;
+}
+
+.pageTurn.endgame {
+  transform: scale(.5, .1);
+}
 
 input[type="text"] {
   border: 1px solid;
@@ -430,9 +442,7 @@ input.preset:checked ~ input.temp {
 #presets input.preset:not(:checked) {
   background-color: #ccc;
 }
-#presets input.preset {
-  box-shadow: 0 1px 1px #888;
-}
+
 .customizing input.preset:checked, #presets input.preset:checked, .customizer fieldset {
   background-color: #eee;
   border-radius: 0.5em 0.5em 0 0;
@@ -456,16 +466,28 @@ input.preset:checked ~ input.temp {
 }
 .customizer fieldset {
   box-shadow: 1px 1px 1px #888;
-}
-.customizer div {
-  transition: 0.2s height;
-  padding: 0;
-  margin: 0;
+  max-width: 580px;
+  position: relative;
 }
 
-span.cap {
-  white-space: nowrap;
-  display: inline-flex;
+#presets legend select, #presets legend button {
+  display: none;
+}
+
+.caps {
+  display: flex;
+  align-content: start;
+  flex-wrap: wrap;
+  clear: both;
+  padding: .5em;
+}
+
+#presets .customizer fieldset {
+  margin-top: 0px;
+}
+
+#noscript-options .customizer fieldset {
+  max-width: fit-content;
 }
 
 .customizer.closed .customizer-controls   {
@@ -476,6 +498,7 @@ span.cap {
 span.cap {
   padding: 0.5em;
   font-weight: normal;
+  display: inline-flex;
 }
 
 span.cap.needed {
@@ -485,20 +508,18 @@ span.cap.needed {
 
 fieldset {
   border: 0;
-  padding: 2em 0.5em 0.5em 0.5em;
+  padding: 1em;
   margin: 0;
-  position: relative;
 }
 
 legend {
   font-weight: bold;
   display: block;
 }
+
 .customizer legend {
-  font-size: 0.75em;
-  position: absolute;
-  top: 1em;
-  left: 2em;
+  font-size: 1em;
+  float: left;
 }
 
 #presets .url {
@@ -513,7 +534,7 @@ legend {
   background-color: #850 !important;
 }
 .hilite-end {
-  transition: 1s background-color;
+  transition: background-color 1s;
 }
 .hilite .url {
   transform: scale(2);
@@ -521,7 +542,7 @@ legend {
 }
 .hilite-end .url {
   transform: none;
-  transition: 1s transform;
+  transition: transform 1s;
 }
 
 #xssChoices {
