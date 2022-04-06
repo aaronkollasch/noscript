@@ -30,19 +30,27 @@ addEventListener("unload", e => {
 
 (async () => {
 
-  function showMessage(className, message) {
+  function messageBox(className, message, extraUI = null) {
     let el = document.getElementById("message");
-    el.textContent = message;
+    if (className === "hidden" && el._lastMessage !== message) return;
+    el._lastMessage = el.textContent = message;
     el.className = className;
+    if (extraUI) {
+      el.appendChild(extraUI);
+      if (typeof extraUI.focus === "function") {
+        extraUI.focus();
+      }
+    }
+    el.scrollIntoView();
   }
 
   try {
     let tabId;
-    let isBrowserAction = true;
+    UI.isBrowserAction = true;
     let optionsClosed = false;
 
     let tabFlags = {active: true};
-    if (browser.windows) tabFlags.lastFocusedWindow = true; // Desktop browsers only
+    if (browser.windows) tabFlags.currentWindow = true; // Desktop browsers only
     let tab = (await browser.tabs.query(tabFlags))[0] ||
     // work-around for Firefox "forgetting" tabs on Android
       (await browser.tabs.query({url: ["*://*/*", "file:///*", "ftp://*/*"]}))[0];
@@ -54,7 +62,7 @@ addEventListener("unload", e => {
       close();
     }
     if (tab.url === document.URL) {
-      isBrowserAction = false;
+      UI.isBrowserAction = false;
       try {
         tabId = parseInt(document.URL.match(/#.*\btab(\d+)/)[1]);
         pageTab = await browser.tabs.get(tabId);
@@ -88,7 +96,7 @@ addEventListener("unload", e => {
     }
 
 
-    if (isBrowserAction) {
+    if (UI.isBrowserAction) {
       browser.tabs.onActivated.addListener(e => {
         if (e.tabId !== tabId) close();
       });
@@ -108,11 +116,12 @@ addEventListener("unload", e => {
     }
 
     await include("/ui/toolbar.js");
+    UI.toolbarInit();
     {
       let handlers = {
         "options": e => {
           if (UA.mobile) { // Fenix fails on openOptionsPage
-            browser.tabs.create({url: browser.runtime.getURL("/ui/options.html")});
+            browser.tabs.create({url: browser.runtime.getManifest().options_ui.page});
           } else {
             browser.runtime.openOptionsPage();
           }
@@ -127,7 +136,7 @@ addEventListener("unload", e => {
         }
       };
 
-      for (let b of document.querySelectorAll("#top > .icon")) {
+      for (let b of document.querySelectorAll("#top .icon")) {
         b.tabIndex = 0;
         if (b.id in handlers) {
           let h = handlers[b.id];
@@ -183,7 +192,17 @@ addEventListener("unload", e => {
         }
       }, true);
     }
-    {
+
+    let originallyEnforced = UI.policy.enforced;
+    let enforcementWarning = button  => {
+      if (button) {
+        let clone = button.cloneNode(true);
+        clone.onclick = button.onclick;
+        button = clone;
+      }
+      messageBox(button ? "warning" : "hidden", _("NotEnforced"), button);
+    };
+    let setupEnforcement = () => {
       let policy = UI.policy;
       let pressed = policy.enforced;
       let button = document.getElementById("enforce");
@@ -192,11 +211,22 @@ addEventListener("unload", e => {
       button.onclick = async () => {
         this.disabled = true;
         policy.enforced = !pressed;
-        await UI.updateSettings({policy, reloadAffected: true});
-        close();
-      }
-    }
-    {
+        await UI.updateSettings({policy, reloadAffected: false});
+        if (policy.enforced !== originallyEnforced &&
+            (policy.enforced || UI.local.immediateUnrestrict)) {
+          reload();
+          close();
+          return;
+        }
+        setupEnforcement();
+        pendingReload(true);
+      };
+      button.disabled = false;
+      enforcementWarning(!policy.enforced && button);
+      setupTabEnforcement();
+    };
+
+    let setupTabEnforcement = () => {
       let pressed = !UI.unrestrictedTab;
       let button = document.getElementById("enforce-tab");
       button.setAttribute("aria-pressed", pressed);
@@ -206,14 +236,25 @@ addEventListener("unload", e => {
           this.disabled = true;
           await UI.updateSettings({
             unrestrictedTab: pressed,
-            reloadAffected: true,
+            reloadAffected: false,
           });
-          close();
+          UI.unrestrictedTab = pressed;
+          if (!(UI.unrestrictedTab && UI.local.stickyUnrestrictedTab)) {
+            reload();
+            close();
+            return;
+          }
+          setupEnforcement();
+          pendingReload(true);
         }
+        button.disabled = false;
+        enforcementWarning(UI.unrestrictedTab && button);
       } else {
         button.disabled = true;
       }
-    }
+    };
+
+    setupEnforcement();
 
 
     let mainFrame = UI.seen && UI.seen.find(thing => thing.request.type === "main_frame");
@@ -224,7 +265,7 @@ addEventListener("unload", e => {
         await browser.tabs.executeScript(tabId, { code: "" });
         if (isHttp) {
           document.body.classList.add("disabled");
-          showMessage("warning", _("freshInstallReload"));
+          messageBox("warning", _("freshInstallReload"));
           let buttons = document.querySelector("#buttons");
           let b = document.createElement("button");
           b.textContent = _("OK");
@@ -246,7 +287,7 @@ addEventListener("unload", e => {
       await include("/nscl/common/restricted.js");
       let isRestricted = isRestrictedURL(pageTab.url);
       if (!isHttp || isRestricted) {
-        showMessage("warning", _("privilegedPage"));
+        messageBox("warning", _("privilegedPage"));
         let tempTrust = document.getElementById("temp-trust-page");
         tempTrust.disabled = true;
         return;
@@ -283,11 +324,12 @@ addEventListener("unload", e => {
     UI.onSettings = initSitesUI;
 
     if (UI.incognito) {
-      UI.wireOption("overrideTorBrowserPolicy", "sync", toggle => {
-          if (UI.forceIncognito !== !toggle) {
-            UI.forceIncognito = !toggle;
-            sitesUI.render();
-          }
+      UI.wireOption("overrideTorBrowserPolicy", "sync", o => {
+        let {checked} = o;
+        if (UI.forceIncognito !== !checked) {
+          UI.forceIncognito = !checked;
+          sitesUI.render();
+        }
       });
     }
 
@@ -363,7 +405,7 @@ addEventListener("unload", e => {
     }
 
     function close() {
-      if (isBrowserAction) {
+      if (UI.isBrowserAction) {
         window.close();
       } else {
         browser.tabs.remove(tab.id);

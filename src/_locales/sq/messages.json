@@ -212,7 +212,7 @@
         "description": ""
     },
     "NotEnforced": {
-        "message": "Kufizimet u çaktivizuan",
+        "message": "Kufizimet janë çaktivizuar nga rregullimet e përdoruesit: NoScript s’do të bllokojë gjë në këtë faqe!",
         "description": ""
     },
     "NoEnforcement": {
@@ -221,6 +221,10 @@
     },
     "Enforce": {
         "message": "Aktivizoji globalisht kufizimet",
+        "description": ""
+    },
+    "EnforceOnRestart": {
+        "message": "Rikthe kufizime mbi rinisje shfletuesi",
         "description": ""
     },
     "NoEnforcementForTab": {
@@ -901,6 +905,42 @@
     },
     "versionShort": {
         "message": "v $1",
+        "description": ""
+    },
+    "settingsThemeLabel": {
+        "message": "Temë",
+        "description": ""
+    },
+    "themeDark": {
+        "message": "E errët",
+        "description": ""
+    },
+    "themeLight": {
+        "message": "E lehtë",
+        "description": ""
+    },
+    "themeAuto": {
+        "message": "Auto",
+        "description": ""
+    },
+    "ModernRed": {
+        "message": "E kuqe Moderne",
+        "description": ""
+    },
+    "VintageBlue": {
+        "message": "Blu e Dikurshme",
+        "description": ""
+    },
+    "toVintageBlue": {
+        "message": "Kalo te stil Blu e Dikurshme",
+        "description": ""
+    },
+    "DonateShort": {
+        "message": "Dhuroni",
+        "description": ""
+    },
+    "DonateLong": {
+        "message": "NoScript është Software i Lirë dhe s’mund të ekzistojë pa ndihmën tuaj. Ju lutemi, dhuroni që tani!",
         "description": ""
     }
 }

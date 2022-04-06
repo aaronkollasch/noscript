@@ -212,7 +212,7 @@
         "description": ""
     },
     "NotEnforced": {
-        "message": "Kısıtlamalar devre dışı bırakıldı",
+        "message": "Kısıtlamalar kullanıcı ayarlarından devre dışı bırakılmış: NoScript bu sayfadaki hiçbir şeyi engellemeyecek!",
         "description": ""
     },
     "NoEnforcement": {
@@ -221,6 +221,10 @@
     },
     "Enforce": {
         "message": "Kısıtlamalar genel olarak etkinleştirilsin",
+        "description": ""
+    },
+    "EnforceOnRestart": {
+        "message": "Web tarayıcı yeniden başlatıldığında kısıtlamalar geri yüklensin",
         "description": ""
     },
     "NoEnforcementForTab": {
@@ -901,6 +905,42 @@
     },
     "versionShort": {
         "message": "v $1",
+        "description": ""
+    },
+    "settingsThemeLabel": {
+        "message": "Tema",
+        "description": ""
+    },
+    "themeDark": {
+        "message": "Koyu",
+        "description": ""
+    },
+    "themeLight": {
+        "message": "Açık",
+        "description": ""
+    },
+    "themeAuto": {
+        "message": "Otomatik",
+        "description": ""
+    },
+    "ModernRed": {
+        "message": "Modern kırmızı",
+        "description": ""
+    },
+    "VintageBlue": {
+        "message": "Eski mavi",
+        "description": ""
+    },
+    "toVintageBlue": {
+        "message": "Eski mavi biçeme geç",
+        "description": ""
+    },
+    "DonateShort": {
+        "message": "Bağış yapın",
+        "description": ""
+    },
+    "DonateLong": {
+        "message": "NoScript özegüt bir yazılımdır ve destekleriniz olmadan var olamaz. Lütfen bağış yapın!",
         "description": ""
     }
 }

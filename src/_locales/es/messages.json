@@ -212,7 +212,7 @@
         "description": ""
     },
     "NotEnforced": {
-        "message": "Restricciones deshabilitadas",
+        "message": "Restricciones deshabilitadas por configuraciones de usuario: ¡NoScript no bloqueará nada en esta página!",
         "description": ""
     },
     "NoEnforcement": {
@@ -221,6 +221,10 @@
     },
     "Enforce": {
         "message": "Habilitar las restricciones globalmente",
+        "description": ""
+    },
+    "EnforceOnRestart": {
+        "message": "Restaurar restricciones al reiniciar el navegador",
         "description": ""
     },
     "NoEnforcementForTab": {
@@ -700,15 +704,15 @@
         "description": ""
     },
     "caps": {
-        "message": "Enable these capabilities",
+        "message": "Habilitar estas capacidades",
         "description": ""
     },
     "capsContext": {
-        "message": "Enable these capabilities when top page matches",
+        "message": "Habilitar estas capacidades cuando la página tope coincide",
         "description": ""
     },
     "anySite": {
-        "message": "ANY SITE",
+        "message": "CUALQUIER SITIO",
         "description": ""
     },
     "cap_script": {
@@ -901,6 +905,42 @@
     },
     "versionShort": {
         "message": "v $1",
+        "description": ""
+    },
+    "settingsThemeLabel": {
+        "message": "Tema",
+        "description": ""
+    },
+    "themeDark": {
+        "message": "Oscuro",
+        "description": ""
+    },
+    "themeLight": {
+        "message": "Luz",
+        "description": ""
+    },
+    "themeAuto": {
+        "message": "Automático",
+        "description": ""
+    },
+    "ModernRed": {
+        "message": "Rojo Moderno",
+        "description": ""
+    },
+    "VintageBlue": {
+        "message": "Azul Antiguo",
+        "description": ""
+    },
+    "toVintageBlue": {
+        "message": "Conmutar al estilo Azul Antiguo",
+        "description": ""
+    },
+    "DonateShort": {
+        "message": "Donar",
+        "description": ""
+    },
+    "DonateLong": {
+        "message": "NoScript es Software Libre y no puede existir sin tu ayuda. ¡Por favor, dona ahora!",
         "description": ""
     }
 }

@@ -17,10 +17,12 @@ input[type="radio"] {
   -moz-appearance:  radio !important;
   padding-right: .2em !important;
 }
+
 input[type="checkbox"] {
   appearance: checkbox !important;
   -webkit-appearance: checkbox !important;
   -moz-appearance:  checkbox !important;
+  display: initial !important;
 }
 
 
@@ -44,10 +46,6 @@ label {
   padding: 4px !important;
 }
 
-.url {
-  white-space: nowrap !important;
-}
-
 .full-address {
   display: block;
 }
@@ -57,9 +55,9 @@ label {
   flex-wrap: wrap;
 }
 
-span.preset {
-  display: inline;
-  white-space: nowrap !important;
+span.preset, .url {
+  display: flex;
+  align-items: center;
 }
 
 input.temp {
@@ -73,10 +71,12 @@ input.temp {
 
 tr.site {
   border-top: 1px solid #888;
+  display: flex;
+  align-items: center;
 }
 
 #top {
-  display:flex;
+  display: flex;
   flex-flow: row;
   justify-content: space-around;
   height: auto;
@@ -92,12 +92,12 @@ tr.site {
   font-size: 12px !important;
   font-family: sans-serif !important;
   text-indent: 0;
-  color: black !important;
-  background: white !important;
+  color: var(--fg-color1) !important;
+  background: var(--bg-color2) !important;
   background-image: none !important;
   border-radius: .3em;
   text-align: center;
-  border: 1px solid black;
+  border: 1px solid var(--fg-color1);
   height: auto;
   padding: .2em;
 }
@@ -110,5 +110,6 @@ tr.site {
 }
 
 :focus {
-  outline: 1px dotted yellow;
+  outline: max(2px, 0.15em) solid currentColor;
+  outline-offset: max(2px, 0.15em);
 }

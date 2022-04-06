@@ -56,6 +56,10 @@
       let policyData = (await Storage.get("sync", "policy")).policy;
       if (policyData && policyData.DEFAULT) {
         ns.policy = new Policy(policyData);
+        if (ns.local.enforceOnRestart && !ns.policy.enforced) {
+          ns.policy.enforced = true;
+          await ns.savePolicy();
+        }
       } else {
         await include("/legacy/Legacy.js");
         ns.policy = await Legacy.createOrMigratePolicy();
@@ -204,9 +208,8 @@
     },
 
     async openStandalonePopup() {
-      let win = await browser.windows.getLastFocused();
       let [tab] = (await browser.tabs.query({
-        lastFocusedWindow: true,
+        currentWindow: true,
         active: true
       }));
 
@@ -214,6 +217,7 @@
         log("No tab found to open the UI for");
         return;
       }
+      let win = await browser.windows.getCurrent();
       browser.windows.create({
         url: popupFor(tab.id),
         width: 800,
@@ -248,25 +252,14 @@
       // contextualData (e.g. a request details object) must contain a tab, a tabId or a documentUrl
       // (used as a fallback if tab's top URL cannot be retrieved, e.g. in service workers)
       let {tab, tabId, documentUrl, url} = contextualData;
-      if (!tab) tab = tabId !== -1 && TabCache.get(tabId);
+      if (!tab) {
+        if (contextualData.type === "main_frame") return url;
+        tab = tabId !== -1 && TabCache.get(tabId);
+      }
       return tab && tab.url || documentUrl || url;
     },
     requestCan(request, capability) {
       return !this.isEnforced(request.tabId) || this.policy.can(request.url, capability, this.policyContext(request));
-    },
-
-    getPolicy(cookieStoreId){
-      if (
-        ns.contextStore &&
-        ns.contextStore.enabled &&
-        ns.contextStore.policies.hasOwnProperty(cookieStoreId)
-      ) {
-        let currentPolicy = ns.contextStore.policies[cookieStoreId];
-        debug("id", cookieStoreId, "has cookiestore", currentPolicy);
-        if (currentPolicy) return currentPolicy;
-      }
-      debug("default cookiestore", cookieStoreId);
-      return ns.policy;
     },
 
     getPolicy(cookieStoreId){
@@ -378,6 +371,18 @@
         await browser.webRequest.handlerBehaviorChanged();
       }
       return this.policy;
+    },
+
+    openOptionsPage({tab, focus, hilite}) {
+      let url = new URL(browser.runtime.getManifest().options_ui.page);
+      if (tab !== undefined) {
+        url.hash += `;tab-main-tabs=${tab}`;
+      }
+      let search = new URLSearchParams(url.search);
+      if (focus) search.set("focus", focus);
+      if (hilite) search.set("hilite", hilite);
+      url.search = search;
+      browser.tabs.create({url: url.toString() });
     },
 
     async saveContextStore() {

@@ -144,8 +144,8 @@ build
 SIGNED="$XPI_DIR/noscript_security_suite-$VER-an+fx.xpi"
 if [ -f "$SIGNED" ]; then
   mv "$SIGNED" "$XPI.xpi"
-  ../../we-publish "$XPI.xpi"
 elif [ -f "$XPI.zip" ]; then
+  SIGNED=""
   if unzip -l "$XPI.xpi" | grep "META-INF/mozilla.rsa" >/dev/null 2>&1; then
     echo "A signed $XPI.xpi already exists, not overwriting."
   else
@@ -201,3 +201,7 @@ if [ -f "$CHROME_ZIP" ]; then
 fi
 
 mv "$BUILD" "$CHROMIUM_UNPACKED"
+
+if [ "$SIGNED" ]; then
+  ../../we-publish "$XPI.xpi"
+fi

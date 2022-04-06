@@ -4,58 +4,25 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-body {
-  font-family: sans-serif;
-  font: -moz-use-system-font;
-  font-size: 12px;
-  min-width: 600px;
-}
-
-html.mobile > body {
-  font-family: Inter, sans-serif;
-  font-size: 4mm;
-  min-width: auto;
-}
-
-html.mobile .desktop {
-  display: none !important;
-}
-
-html:not(.tor) .tor, html.tor .not-tor {
-  display: none;
-}
-html.tor .tor, html:not(.tor) .not-tor {
-  display: initial;
-}
+ @import url("./common.css");
 
 .opt-group {
   display: flex;
   flex-flow: row wrap;
-  border-bottom: 1px solid rgba(255, 255, 255, .5);
   padding: .5em 0;
 }
-
-.opt-group:last-child {
-  border-bottom: none;
-  margin-bottom: .5em;
+:is(section, .opt-group) ~ :is(.opt-group, section, fieldset) {
+  border-top: 2px dotted var(--bg-color1);
 }
 
 .opt-group > span {
   margin: 0 .5em;
   display: flex;
   flex-flow: row;
-  align-items: center;
+  align-items: baseline;
 }
 
-@media (max-width: 100mm) {
-  body {
-    background-size: 4em !important;
-    padding-right: 0 !important;
-  }
-  #header {
-    margin-right: 4em !important;
-  }
-
+@media (max-width: 550px) {
   #sites .presets {
     width: 0 !important;
     padding: 0 !important;
@@ -64,75 +31,79 @@ html.tor .tor, html:not(.tor) .not-tor {
   }
 
   #presets .presets input.preset {
-    min-width: 5em;
+    min-width: 28vw;
   }
 
   #sites .presets input.preset {
      min-width: 0 !important;
-     background-color: none !important;
      margin-top: 0;
+     margin-left: 0;
+     margin-right: 1em;
      font-weight: bold;
   }
 
+  #sites .site:not(.customizing) .presets input.preset {
+    background-color: transparent;
+    background-position: center;
+  }
 
   #sites .customizing input.preset:checked  {
     margin-left: 0;
+    background-position: center;
+    width: 2.2em;
   }
 
   #presets .presets input.preset + label {
-     font-size: 60%;
-     position: absolute !important;
-     text-align: right;
-     padding: 0 !important;
-     margin: 0 !important;
-     display: block !important;
-     width: 5.5em !important;
-     z-index: 1000;
-     top: 1em;
-     left: 4em !important;
-     text-shadow: 1px 1px white, -1px -1px white;
-   }
+    font-size: 60%;
+    --line-scaled: calc(var(--line-size) / 0.6);
+    position: absolute !important;
+    text-align: left;
+    margin: 0px !important;
+    display: block !important;
+    overflow: visible;
+    z-index: 1000;
+    bottom: 0px;
+    line-height: var(--line-scaled);
+    left: var(--line-scaled);
+    text-shadow: 1px 1px var(--bg-color2), -1px -1px var(--bg-color2);
+  }
 
    #sites .presets input.preset:checked + label {
-     z-index: 1000;
-     font-size: 60%;
-     top: 3em;
-     left: -3em !important;
-     margin: 0 !important;
-     padding: 0 !important;
-     text-align: center !important;
-     display: block !important;
-     position: absolute;
-     width: 10em !important;
-     overflow: visible !important;
+    z-index: 1000;
+    font-size: 60%;
+    left: 0;
+    width: auto;
+    top: calc(var(--line-size) * 1.8);
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: center !important;
+    display: block !important;
+    position: absolute;
+    overflow: visible !important;
+    background-image: none !important;
   }
 
   .presets input.preset:checked ~ input.temp {
-    left: 1.5em;
+    left: 2em;
     pointer-events: none;
   }
 
   .customizing input.preset:checked ~ input.temp {
     pointer-events: all !important;
     z-index: 1000;
-    top: 1.5em;
-    right: -1em;
-    padding: 1em;
+    left: var(--line-size);
+    padding: calc(var(--line-size) / 2);
   }
 
   #sites .customizing input.preset:checked + label {
-    text-align:right !important;
-    padding-right: 1em !important;
-    right: 1em !important;
-    left: auto !important;
-    top: 3.5em;
     pointer-events: none;
+    transition: all .2s;
   }
 
   td.presets {
     white-space: nowrap !important;
-    vertical-align: bottom;
-    border: 1px solid black;
+    vertical-align: middle;
+    border: 1px solid var(--fg-color2);
   }
   .url > span > span {
     white-space: wrap;
@@ -141,6 +112,9 @@ html.tor .tor, html:not(.tor) .not-tor {
     font-size: 80%;
    }
 
+   .contextual fieldset {
+     padding-top: 1.5em;
+   }
 }
 
 
@@ -151,6 +125,17 @@ html.tor .tor, html:not(.tor) .not-tor {
 #sites .customizing .presets {
   padding-bottom: 0 !important;
   margin-bottom: 0 !important;
+  vertical-align: bottom;
+}
+
+.capsContext, .capsContext > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.capsContext > label {
+  display: block;
 }
 
 .capsContext select {
@@ -159,13 +144,14 @@ html.tor .tor, html:not(.tor) .not-tor {
 
 .contextual .capsContext select {
   display: initial;
+  margin: 0 1em;
 }
 
 .pageTurn {
   position: absolute;
   outline: 3px solid #888;
   z-index: 1000;
-  background-color: white;
+  background-color: var(--bg-color2);
   transform-origin: bottom center;
   transition: transform .5s;
 }
@@ -188,32 +174,53 @@ input[type="checkbox"] {
 }
 .sites {
   border: 0;
-  background: white;
   border-collapse: collapse;
   border-spacing: 0;
   width: 100%;
-  overflow-y: auto;
-
+  image-rendering: -webkit-optimize-contrast;
+  --extra-preset-width: 0px;
 }
+
+.vintage .sites {
+  image-rendering: auto;
+}
+
 .sites tr, .sites td {
   margin: 0;
   padding: 0;
   border: none;
   font-size: 1em;
+  vertical-align: middle;
 }
-html:not(.mobile) .sites > tr.site:hover {
-  background: #bdf;
+
+html:not(.mobile) .sites > tr.site:not(.customizing):is(:focus-within, :hover) {
+  background-image: var(--bg-focused-row);
+  border-color: transparent;
 }
-html:not(.mobile) .sites > tr.site:focus-within {
-  background: #ccc;
+
+.sites > tr.site:not(.customizing) {
+  border-top: var(--border-row-sep);
 }
-.sites > tr:nth-child(even) {background: #fff}
-.sites > tr:nth-child(odd) {background: #eee}
+
+.sites > tr.site:nth-of-type(even) {
+  background-color: var(--bg-even-row);
+  --bg-preset-color: var(--bg-odd-row);
+}
+
+.sites > tr.site:nth-of-type(odd) {
+  background-color: var(--bg-odd-row);
+  --bg-preset-color: var(--bg-even-row);
+}
+
+
+.sites > tr.site:first-of-type, tr.site:focus-within + tr, .sites > tr.customizing, .sites > tr.customizing + tr.site, .customizer, .customizer + tr.site  {
+  border-color: transparent;
+}
+
 
 .site .url {
     padding: 0 0 0 0.5em;
-    color: #000;
-    vertical-align: top;
+    color: var(--fg-color2);
     width: 80%;
 }
 .site .url .protocol { display: none }
@@ -231,13 +238,13 @@ html:not(.mobile) .sites > tr.site:focus-within {
 .site .url[data-key="host"] .domain,
 .site .url[data-key="host"] .sub,
 .site .url[data-key="unsafe"] span {
-  color: #a00;
+  color: var(--unsafe-color)
 }
 
 .site .url[data-key="secure"] .domain,
 .site .url[data-key="secure"] .sub,
 .site .url[data-key="full"] span {
-  color: black;
+  color: var(--fg-color2)
 }
 
 .site .url[data-key="full"] span,
@@ -254,7 +261,7 @@ input.https-only {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background: url(/img/ui-http64.png) no-repeat center;
+  background: var(--img-ui-http) no-repeat center;
   background-size: 1.5em;
   background-position: bottom;
   width: 2em;
@@ -264,14 +271,14 @@ input.https-only {
   cursor: pointer;
 }
 input.https-only:checked {
-  background-image: url(/img/ui-https64.png);
+  background-image: var(--img-ui-https);
 }
 label.https-only {
   display: none;
 }
 
 .preset label.preset.override {
-  color: #555;
+  color: var(--text-color);
 }
 
 [data-preset="UNTRUSTED"] .https-only, [data-preset="DEFAULT"] .https-only {
@@ -287,8 +294,9 @@ td.presets {
 span.preset {
   position: relative;
   display: inline-block;
-  top: 0.13em;
   font-size: 1em;
+  height: var(--line-size);
+  top: 2px;
 }
 
 .preset label, .preset input, .preset button {
@@ -300,13 +308,14 @@ span.preset {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background: url(/img/ui-no64.png) no-repeat center left;
-  background-size: 1.5em;
-  width: 1.5em;
-  height: 1.5em;
+  background: var(--img-ui-no) no-repeat center;
   outline: 0;
-  opacity: .5;
-  margin: 0 .5em 0.13em .5em;
+  opacity: .7;
+  margin: 0 .5em;
+  background-position: 0;
+  background-size: var(--line-size);
+  width: var(--line-size);
+  height: var(--line-size);
 }
 
 #presets-sizer {
@@ -326,9 +335,11 @@ span.preset {
 .presets input.preset:checked, #presets input.preset, #presets-sizer input.preset {
   opacity: 1;
   transform: none;
-  min-width: 9.38em;
-  background-color: #ddd;
-  border-radius: 0.5em;
+  min-width: calc(var(--preset-label-width) + var(--line-size) + var(--extra-preset-width));
+}
+
+.site:not(.customizing) .presets input.preset:checked {
+  filter: drop-shadow(0 0 2px var(--fg-color1));
 }
 
 .presets input.preset:focus {
@@ -336,22 +347,23 @@ span.preset {
 }
 .sites input + label {
   font-size: 1em;
-  line-height: 1.5em;
-  vertical-align: top;
+  vertical-align: baseline;
 }
+
 .presets label.preset {
-  padding: 0;
   letter-spacing: -0.06em;
-  width: 0em;
+  width: 0;
   overflow: hidden;
   display: none;
   text-transform: uppercase;
-  color: #000;
-  opacity: .6;
+  color: var(--fg-color2);
+  opacity: .8;
   position: absolute;
-  left: 0em;
-  padding-left: 2.5em;
-
+  left: 0;
+  top: -.1em;
+  padding: .05em 0 .05em 0;
+  padding-left: calc(var(--line-size) * 1.5);
+  line-height: var(--line-size);
 }
 
 .presets input.preset[value^="T"] + label {
@@ -360,9 +372,16 @@ span.preset {
 
 .presets input.preset:checked + label, #presets .presets label {
   opacity: 1;
-  width: 80%;
   display: inline-flex;
+  width: 75%;
 }
+
+:not(#presets) > .sites .site:not(.customizing) .presets input.preset:checked + label.preset {
+  background-image: linear-gradient(to right, transparent calc(var(--line-size) * 1.5), var(--bg-preset-color) 50%);
+  border-radius: calc(var(--line-size) / 2);
+}
+
+
 
 #presets-sizer .presets label {
    position: static;
@@ -371,32 +390,18 @@ span.preset {
    overflow: visible;
 }
 
-input:focus, button:focus, input:focus, a:focus {
-  --focus-color:    #bdf8;
-  outline: 0;
-  filter:
-    drop-shadow(3px 3px 3px var(--focus-color))
-    drop-shadow(-3px 3px 3px var(--focus-color))
-    drop-shadow(3px -3px 3px var(--focus-color))
-    drop-shadow(-3px -3px 3px var(--focus-color));
-}
-
-input.preset:disabled {
-  filter: grayscale(100%);
-}
-
 input.preset[value="T_TRUSTED"] {
-  background-image: url(/img/ui-temp64.png);
+  background-image: var(--img-ui-temp);
 }
 
 input.preset[value="TRUSTED"] {
-  background-image: url(/img/ui-yes64.png)
+  background-image: var(--img-ui-yes)
 }
 input.preset[value="UNTRUSTED"] {
-  background-image: url(/img/ui-black64.png)
+  background-image: var(--img-ui-black)
 }
 input.preset[value="CUSTOM"] {
-  background-image: url(/img/ui-custom64.png)
+  background-image: var(--img-ui-custom)
 }
 
 input.temp {
@@ -409,7 +414,7 @@ input.temp {
   border: 0;
   opacity: 0;
   outline: 0;
-  background: url(/img/ui-clock64.png) no-repeat center;
+  background: var(--img-ui-clock) no-repeat center;
   background-size: 60%;
   width: 1.5em;
   height: 1.5em;
@@ -429,8 +434,8 @@ input.temp + label {
 }
 
 input.preset:checked ~ input.temp {
-  opacity: .5;
-  right: 0;
+  opacity: .7;
+  right: 0.4em;
   pointer-events: all;
 }
 
@@ -440,34 +445,44 @@ input.preset:checked ~ input.temp {
 }
 
 #presets input.preset:not(:checked) {
-  background-color: #ccc;
+  background-color: var(--tab-color1);
 }
 
-.customizing input.preset:checked, #presets input.preset:checked, .customizer fieldset {
-  background-color: #eee;
-  border-radius: 0.5em 0.5em 0 0;
-  margin: 0 0.06em 0.06em 0.06em;
-}
-.customizing input.preset:checked, #presets input.preset, #presets input.preset:checked  {
-  margin: 0 0 -0.2em 1em;
-  border-radius: 0.5em 0.5em 0 0;
+.customizing input.preset:checked, #presets input.preset:checked {
+  background-color: var(--form-color2);
+  height: calc(var(--line-size) + 0.2em);
+  filter: none;
 }
 
-.customizing input.preset:checked + label.preset {
-  padding-left: 3em;
-}
-
-.customizing, .customizer {
-  background-color: #ccc !important;
-}
-
-#presets .customizing, #presets .customizer {
-  background-color: #ddd !important;
-}
 .customizer fieldset {
-  box-shadow: 1px 1px 1px #888;
-  max-width: 580px;
+  background-color: var(--form-color2);
+  margin: 0;
+  box-shadow: var(--form-color1) 0 2px 2px;
   position: relative;
+}
+
+.customizing input.preset:checked {
+  margin: 0 0 -0.2em 0;
+  border-radius: 1em 1em 0 0;
+  background-position: 0.5em 0;
+  --extra-preset-width: 1em;
+}
+
+#presets :is(input.preset, input.preset:checked) {
+  margin: 0 .5em -0.2em 0;
+  border-radius: 1em 1em 0 0;
+  background-position: 0.5em 0;
+  --extra-preset-width: 0px;
+  filter: none;
+}
+
+#presets .site.customizing {
+  background-color: transparent;
+}
+
+#presets .customizing input.preset:not(:checked) {
+  margin-bottom: 0;
+  box-shadow: 0 0 1px var(--form-color2);
 }
 
 #presets legend select, #presets legend button {
@@ -486,24 +501,24 @@ input.preset:checked ~ input.temp {
   margin-top: 0px;
 }
 
-#noscript-options .customizer fieldset {
-  max-width: fit-content;
-}
-
 .customizer.closed .customizer-controls   {
   height: 0;
   overflow: hidden;
 }
 
 span.cap {
-  padding: 0.5em;
+  padding: 0.3em;
+  margin: 0.2em;
+  border-radius: .4em;
   font-weight: normal;
   display: inline-flex;
+  align-items: center;
 }
 
 span.cap.needed {
   font-weight: bold;
-  background-color: #c88;
+  color: var(--fg-color2);
+  background-color: var(--hilite-color);
 }
 
 fieldset {
@@ -548,21 +563,25 @@ legend {
 #xssChoices {
   padding: .5em;
   display: none;
-  flex-direction: column;
 }
 
 #xssChoices.populated {
-  display: flex;
+  display: block;
+}
+
+#xssChoices select {
+  display: block;
+  margin: 0 0 .5em 0;
 }
 
 #xssChoices option {
-  background: white;
+  background: var(--bg-color2);
 }
 
 #xssChoices option.block {
-  color: #a00;
+  color: var(--accent-color);
 }
 
 #xssChoices option.allow {
-  color: #080;
+  color: var(--text-color);
 }

@@ -23,6 +23,7 @@ var UI = (() => {
 
   var UI = {
     initialized: false,
+    isBrowserAction: false,
 
     presets: {
       "DEFAULT": "Default",
@@ -38,7 +39,6 @@ var UI = (() => {
         UI.incognito = tab && tab.incognito
       );
       let scripts = [
-        "/ui/ui.css",
         "/nscl/common/Messages.js",
         "/nscl/lib/punycode.js",
         "/nscl/common/tld.js",
@@ -48,8 +48,9 @@ var UI = (() => {
         "/nscl/common/ContextStore.js"
       ];
       this.mobile = UA.mobile;
+      let root = document.documentElement;
       if (this.mobile) {
-        document.documentElement.classList.toggle("mobile", true);
+        root.classList.add("mobile");
       }
       await include(scripts);
 
@@ -78,8 +79,8 @@ var UI = (() => {
             }
             resolve();
             if (UI.onSettings) UI.onSettings();
-            if (UI.tabId === -1 || UI.xssBlockedInTab) UI.createXSSChoiceManager();
             await HighContrast.init();
+            if (UI.tabId === -1 || UI.xssBlockedInTab) UI.createXSSChoiceManager();
           }
         });
         UI.pullSettings();
@@ -163,30 +164,73 @@ var UI = (() => {
       browser.tabs.create({url});
     },
 
+    wireChoice(name, storage = "sync", onchange) {
+      let inputs = document.querySelectorAll(`input[type=radio][name="${name}"]`);
+      if (inputs.length === 0) {
+        error(`Radio button w/ name "${name}" not found.`);
+        return;
+      }
+      if (typeof storage === "function") {
+        (async() => {
+          let value = await storage(null);
+          for (let i of inputs) {
+            i.onchange = e => storage(i);
+            i.checked = value === i.value;
+          }
+        })();
+      } else {
+        let obj = UI[storage];
+        let value = obj[name];
+        for (let i of inputs) {
+          if (i.value === value) i.checked = true;
+          if (onchange) onchange(i);
+          i.onchange = async () => {
+            obj[name] = i.value;
+            await UI.updateSettings({[storage]: obj});
+            if (onchange) onchange(i);
+          }
+        }
+      }
+    },
+
     wireOption(name, storage = "sync", onchange) {
       let input = document.querySelector(`#opt-${name}`);
       if (!input) {
-        debug("Checkbox not found %s", name);
+        error(`Checkbox w/ id "opt-${name}" not found.`);
         return;
       }
       if (typeof storage === "function") {
         input.onchange = e => storage(input);
-        input.checked = storage(null);
+        (async () => {
+          input.checked = await storage(null);
+        })();
       } else {
         let obj = UI[storage];
-        if (!obj) log(storage);
         input.checked = obj[name];
-        if (onchange) onchange(input.checked);
+        if (onchange) onchange(input);
         input.onchange = async () => {
           obj[name] = input.checked;
           await UI.updateSettings({[storage]: obj});
-          if (onchange) onchange(obj[name]);
+          if (onchange) onchange(input);
         }
       }
       return input;
     },
 
+    hilite(el) {
+      el.classList.add("hilite");
+      window.setTimeout(() => {
+          el.classList.remove("hilite");
+          el.classList.add("hilite-end");
+          el.scrollIntoView();
+          window.setTimeout(() => {
+            el.classList.remove("hilite-end");
+          }, 1000)
+      }, 50);
+    },
+
     createXSSChoiceManager(parent = "#xssChoices") {
+      if (!UA.isMozilla) return;
       let choicesUI = document.querySelector(parent);
       if (!choicesUI) return;
       choicesUI.classList.remove("populated");
@@ -226,17 +270,23 @@ var UI = (() => {
         button = choicesUI.appendChild(document.createElement("button"));
         button.textContent = _("XSS_clearUserChoices");
       }
+      (list.onchange = () => {
+        button.disabled = list.selectedOptions.length === 0;
+      })();
       button.onclick = () => {
         let xssUserChoices = UI.xssUserChoices;
         for (let o of [...list.selectedOptions]) {
           delete xssUserChoices[o.value];
           o.remove();
         }
+        let reloadAffected = false;
         if (list.options.length === 0) {
           choicesUI.classList.remove("populated");
+          reloadAffected = true;
         }
         UI.updateSettings({
-          xssUserChoices
+          xssUserChoices,
+          reloadAffected,
         });
       };
     }
@@ -245,14 +295,15 @@ var UI = (() => {
   var HighContrast = {
     css: null,
     async init() {
-      this.widget = UI.wireOption("highContrast", "local", value => {
-        UI.highContrast = value;
+      this.widget = UI.wireOption("highContrast", "local", o => {
+        UI.highContrast = o.checked;
         this.toggle();
       });
       await this.toggle();
     },
     async toggle() {
       let hc = "highContrast" in UI ? UI.highContrast : await this.detect();
+      if (UI.toolbarInit) UI.toolbarInit();
       if (hc) {
         if (this.css) {
           document.documentElement.appendChild(this.css);
@@ -330,8 +381,10 @@ var UI = (() => {
     <fieldset>
     <legend class="capsContext">
       <label></label>
+      <div>
       <select><option>ANY SITE</option></select>
       <button class="reset" disabled>Reset</button>
+      </div>
     </legend>
     <div class="caps">
     <span class="cap">
@@ -397,10 +450,7 @@ var UI = (() => {
           presets.appendChild(clone);
         }
 
-        if (!UI.mobile) {
-          UI.Sites.correctSize(presets);
-        }
-
+        UI.Sites.correctSize(presets);
       }
 
       // URL
@@ -442,25 +492,9 @@ var UI = (() => {
       let labelWidth = 0;
       for (let l of sizer.querySelectorAll("label.preset")) {
         let lw = l.offsetWidth;
-        debug("lw", l.textContent, lw);
         if (lw > labelWidth) labelWidth = lw;
       }
-
-      debug(`Preset: %s Label: %s`, presetWidth, labelWidth);
-      labelWidth += 16;
-      if (presetWidth < labelWidth) {
-        for (let ss of document.styleSheets) {
-          if (ss.href.endsWith("/ui.css")) {
-            for (let r of ss.cssRules) {
-              if (/input\.preset:checked.*min-width:/.test(r.cssText)) {
-                r.style.minWidth = (labelWidth) + "px";
-                break;
-              }
-            }
-          }
-        }
-      }
-
+      document.documentElement.style.setProperty("--preset-label-width", (labelWidth) + "px");
       sizer.remove();
       UI.Sites.correctSize = () => {}; // just once, please!
     }
@@ -530,24 +564,29 @@ var UI = (() => {
       let tempToggle = preset.parentNode.querySelector("input.temp");
 
       if (ev.type === "change") {
-        row.permissionsChanged = false;
         if (!row._originalPerms) {
           row._originalPerms = row.perms.clone();
+          Object.defineProperty(row, "permissionsChanged", {
+            get() {
+              return this.perms && !this.perms.sameAs(this._originalPerms);
+            }
+          });
         }
-
         if (target.matches(".capsContext select")) {
           let opt = target.querySelector("option:checked");
           if (!opt) return;
           let context = opt.value;
           if (context === "*") context = null;
           ({siteMatch, perms, contextMatch} = this.policy.get(siteMatch, context));
-          if (context && contextMatch !== context) {
+          if (!context) {
+            row._customPerms = perms;
+          } else if (contextMatch !== context) {
             let temp = row.perms.temp || UI.forceIncognito;
             perms = new Permissions(new Set(row.perms.capabilities), temp);
             row.perms.contextual.set(context, perms);
             fireOnChange(this, row);
           }
-          row.perms = row._customPerms = perms;
+          row.perms = perms;
           row.siteMatch = siteMatch;
           row.contextMatch = context;
           this.setupCaps(perms, preset, row);
@@ -574,7 +613,6 @@ var UI = (() => {
           row.contextMatch = null;
           row.perms = policyPreset;
           delete row._customPerms;
-          debug("Site match", siteMatch);
           if (siteMatch) {
             this.policy.set(siteMatch, policyPreset);
           } else {
@@ -594,7 +632,6 @@ var UI = (() => {
             this.customize(perms, preset, row);
           }
         }
-        row.permissionsChanged = !row.perms.sameAs(row._originalPerms);
         fireOnChange(this, row);
       } else if (!(isCap || isTemp || customizer) && ev.type === "click") {
         this.customize(row.perms, preset, row);
@@ -603,8 +640,9 @@ var UI = (() => {
 
     setupCaps(perms, preset, row) {
       let immutable = Permissions.IMMUTABLE[preset.value] || {};
-      let lastInput = null;
-      for (let input of this.rowTemplate._customizer.querySelectorAll("input")) {
+      let customizer = this.rowTemplate._customizer;
+      customizer.lastInput = null;
+      for (let input of customizer.querySelectorAll("input")) {
         let type = input.value;
         if (type in immutable) {
           input.disabled = true;
@@ -612,7 +650,7 @@ var UI = (() => {
         } else {
           input.checked = perms.allowing(type);
           input.disabled = false;
-          lastInput = input;
+          customizer.lastInput = input;
         }
         input.parentNode.classList.toggle("needed", this.siteNeeds(row._site, type));
       }
@@ -659,18 +697,21 @@ var UI = (() => {
           opt.textContent = label;
           return opt;
         }
+        let toLabel = site => {
+          let label = Sites.toExternal(site);
+          return label.includes(":") ? label : `…${label}`;
+        };
         for (let child; child = ctxSelect.firstChild;) child.remove();
         ctxSelect.appendChild(entry("*", _("anySite")));
-        let ctxSites = row.perms.contextual;
         if (this.mainDomain) {
           let key = Sites.optimalKey(this.mainUrl);
-          ctxSelect.appendChild(entry(key, `…${Sites.toExternal(key)}`)).selected = key === row.contextMatch;
+          ctxSelect.appendChild(entry(key, toLabel(key))).selected = key === row.contextMatch;
         } else {
+          if (!row._customPerms) row._customPerms = row.perms;
+          let ctxSites = row._customPerms.contextual;
           if (ctxSites) {
             for (let [site, ctxPerms] of ctxSites.entries()) {
-              let label = Sites.toExternal(site);
-              if (!label.includes(":")) label = `…${label}`;
-              ctxSelect.appendChild(entry(site, label)).selected === perms === ctxPerms;
+              ctxSelect.appendChild(entry(site, toLabel(site))).selected = perms === ctxPerms;
             }
           }
         }
@@ -680,7 +721,6 @@ var UI = (() => {
           ctxReset.onclick = () => {
             let perms = this.policy.get(row.siteMatch).perms;
             perms.contextual.delete(row.contextMatch);
-            row.permissionsChanged = row._originalPerms && !row.perms.sameAs(row._originalPerms);
             fireOnChange(this, row);
             selected.previousElementSibling.selected = true;
             if (!this.mainDomain) selected.remove();
@@ -710,7 +750,7 @@ var UI = (() => {
         if (e.shiftKey) return true;
         switch(e.code) {
           case "Tab":
-            if (document.activeElement === lastInput) {
+            if (document.activeElement === customizer.lastInput) {
               if (temp) {
                 temp.tabIndex = "0";
                 temp.onblur = () => this.customize(null);
@@ -719,9 +759,11 @@ var UI = (() => {
               }
             }
             return true;
+          case "ArrowUp":
+            if (document.activeElement === ctxSelect)
+              return; // avoid closing the customizer on context selection change
           case "ArrowLeft":
           case "ArrowRight":
-          case "ArrowUp":
             this.onkeydown = null;
             this.customize(null);
             preset.focus();
@@ -744,12 +786,11 @@ var UI = (() => {
 
     render(sites = this.sites, sorter = this.sorter) {
       let parentNode = this.parentNode;
-      debug("Rendering %o inside %o", sites, parentNode);
       if (sites) this._populate(sites, sorter);
+
       parentNode.innerHTML = "";
       parentNode.appendChild(this.fragment);
       let root = parentNode.querySelector("table.sites");
-      debug("Wiring", root);
       if (!root.wiredBy) {
         root.addEventListener("keydown", e => this._keyNavHandler(e), true);
         root.addEventListener("keyup", e => {
@@ -1100,20 +1141,12 @@ var UI = (() => {
       }
     }
 
-    highlight(key) {
+    hilite(key) {
       key = Sites.toExternal(key);
       for (let r of this.allSiteRows()) {
         if (key === r.siteMatch) {
-          r.classList.add("hilite");
+          UI.hilite(r);
           r.querySelector("input.preset:checked").focus();
-          window.setTimeout(() => {
-              r.classList.remove("hilite");
-              r.classList.add("hilite-end");
-              r.scrollIntoView();
-              window.setTimeout(() => {
-                r.classList.remove("hilite-end");
-              }, 1000)
-          }, 50);
           break;
         }
       }

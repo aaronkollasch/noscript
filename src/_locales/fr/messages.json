@@ -212,7 +212,7 @@
         "description": ""
     },
     "NotEnforced": {
-        "message": "Les restrictions sont désactivées",
+        "message": "Les restrictions sont désactivées par les paramètres de l’utilisateur : NoScript ne bloquera rien sur cette page. ",
         "description": ""
     },
     "NoEnforcement": {
@@ -221,6 +221,10 @@
     },
     "Enforce": {
         "message": "Activer les restrictions globalement",
+        "description": ""
+    },
+    "EnforceOnRestart": {
+        "message": "Rétablir les restrictions après redémarrage du navigateur",
         "description": ""
     },
     "NoEnforcementForTab": {
@@ -901,6 +905,42 @@
     },
     "versionShort": {
         "message": "v $1",
+        "description": ""
+    },
+    "settingsThemeLabel": {
+        "message": "Thème",
+        "description": ""
+    },
+    "themeDark": {
+        "message": "Sombre",
+        "description": ""
+    },
+    "themeLight": {
+        "message": "Clair",
+        "description": ""
+    },
+    "themeAuto": {
+        "message": "Automatique",
+        "description": ""
+    },
+    "ModernRed": {
+        "message": "Rouge moderne",
+        "description": ""
+    },
+    "VintageBlue": {
+        "message": "Bleu ancien",
+        "description": ""
+    },
+    "toVintageBlue": {
+        "message": "Passer au style bleu ancien",
+        "description": ""
+    },
+    "DonateShort": {
+        "message": "Faire un don",
+        "description": ""
+    },
+    "DonateLong": {
+        "message": "NoScript est un logiciel libre et gratuit qui ne peut pas exister sans votre aide. Veuillez faire un don dès maintenant.",
         "description": ""
     }
 }

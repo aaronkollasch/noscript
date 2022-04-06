@@ -212,7 +212,7 @@
         "description": ""
     },
     "NotEnforced": {
-        "message": "Ограничения отключены",
+        "message": "Ограничения отключены настройками пользователя:\nNoScript ничего не блокирует на этой странице",
         "description": ""
     },
     "NoEnforcement": {
@@ -221,6 +221,10 @@
     },
     "Enforce": {
         "message": "Глобальное включение ограничений",
+        "description": ""
+    },
+    "EnforceOnRestart": {
+        "message": "Восстанавливать ограничения при перезапуске браузера",
         "description": ""
     },
     "NoEnforcementForTab": {
@@ -901,6 +905,42 @@
     },
     "versionShort": {
         "message": "v $1",
+        "description": ""
+    },
+    "settingsThemeLabel": {
+        "message": "Тема",
+        "description": ""
+    },
+    "themeDark": {
+        "message": "Тёмная",
+        "description": ""
+    },
+    "themeLight": {
+        "message": "Светлая",
+        "description": ""
+    },
+    "themeAuto": {
+        "message": "Автовыбор",
+        "description": ""
+    },
+    "ModernRed": {
+        "message": "Modern Red",
+        "description": ""
+    },
+    "VintageBlue": {
+        "message": "Vintage Blue",
+        "description": ""
+    },
+    "toVintageBlue": {
+        "message": "Переключить стиль Modern Red / Vintage Blue",
+        "description": ""
+    },
+    "DonateShort": {
+        "message": "Пожертвование",
+        "description": ""
+    },
+    "DonateLong": {
+        "message": "NoScript — это свободное ПО и ему необходима ваша помощь. Сделайте пожертвование сейчас!",
         "description": ""
     }
 }

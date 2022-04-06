@@ -212,7 +212,7 @@
         "description": ""
     },
     "NotEnforced": {
-        "message": "Restrizioni disattivate",
+        "message": "Restrizioni disattivate per scelta dell'utente: NoScript non bloccherà nulla in questa pagina!",
         "description": ""
     },
     "NoEnforcement": {
@@ -901,6 +901,30 @@
     },
     "versionShort": {
         "message": "v $1",
+        "description": ""
+    },
+    "settingsThemeLabel": {
+        "message": "Tema",
+        "description": ""
+    },
+    "themeDark": {
+        "message": "Scuro",
+        "description": ""
+    },
+    "themeLight": {
+        "message": "Chiaro",
+        "description": ""
+    },
+    "themeAuto": {
+        "message": "Automatico",
+        "description": ""
+    },
+    "DonateShort": {
+        "message": "Dona",
+        "description": ""
+    },
+    "DonateLong": {
+        "message": "NoScript è un software libero e gratuito: non esisterebbe senza il tuo aiuto. Dona ora!",
         "description": ""
     }
 }

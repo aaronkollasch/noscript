@@ -8,7 +8,7 @@
       "strict_min_version": "59.0"
     }
   },
-  "version": "11.3.2",
+  "version": "11.4.4",
   "description": "__MSG_Description__",
   "incognito": "spanning",
 
@@ -69,7 +69,8 @@
       "bg/Defaults.js",
       "bg/RequestGuard.js",
       "bg/Settings.js",
-      "bg/main.js"
+      "bg/main.js",
+      "common/themes.js"
     ]
   },
 
@@ -79,6 +80,7 @@
        "match_about_blank": true,
        "all_frames": true,
        "css": [
+         "/common/themes.css",
          "/content/content.css"
        ]
     },

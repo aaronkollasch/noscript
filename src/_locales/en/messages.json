@@ -159,13 +159,16 @@
     "message": "General"
   },
   "NotEnforced": {
-    "message": "Restrictions disabled"
+    "message": "Restrictions disabled by user's settings: NoScript won't block anything on this page!"
   },
   "NoEnforcement": {
     "message": "Disable restrictions globally (dangerous)"
   },
   "Enforce": {
     "message": "Enable restrictions globally"
+  },
+  "EnforceOnRestart": {
+    "message": "Restore restrictions on browser restart"
   },
   "NoEnforcementForTab": {
     "message": "Disable restrictions for this tab"
@@ -676,5 +679,32 @@
   },
   "versionShort": {
     "message": "v $1"
+  },
+  "settingsThemeLabel": {
+    "message": "Theme"
+  },
+  "themeDark": {
+    "message": "Dark"
+  },
+  "themeLight": {
+    "message": "Light"
+  },
+  "themeAuto": {
+    "message": "Auto"
+  },
+  "ModernRed": {
+    "message": "Modern Red"
+  },
+  "VintageBlue": {
+    "message": "Vintage Blue"
+  },
+  "toVintageBlue": {
+    "message": "Switch to the Vintage Blue style"
+  },
+  "DonateShort": {
+    "message": "Donate"
+  },
+  "DonateLong": {
+    "message": "NoScript is Free Software and can't exist without your help. Please donate now!"
   }
 }

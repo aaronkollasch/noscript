@@ -212,7 +212,7 @@
         "description": ""
     },
     "NotEnforced": {
-        "message": "Забраните се оневозможени",
+        "message": "Забрани оневозможени во поставки на корисник: NoScript нема да блокира ништо на оваа веб страна!",
         "description": ""
     },
     "NoEnforcement": {
@@ -221,6 +221,10 @@
     },
     "Enforce": {
         "message": "Овозможи ги забраните глобално",
+        "description": ""
+    },
+    "EnforceOnRestart": {
+        "message": "Врати ги забраните при повторно стартување на прелистувачот",
         "description": ""
     },
     "NoEnforcementForTab": {
@@ -700,15 +704,15 @@
         "description": ""
     },
     "caps": {
-        "message": "Enable these capabilities",
+        "message": "Овозможи ги овие можности",
         "description": ""
     },
     "capsContext": {
-        "message": "Enable these capabilities when top page matches",
+        "message": "Овозможи ги овие можности кога главната страна одговара",
         "description": ""
     },
     "anySite": {
-        "message": "ANY SITE",
+        "message": "БИЛО КОЈА ВЕБ СТРАНА",
         "description": ""
     },
     "cap_script": {
@@ -901,6 +905,42 @@
     },
     "versionShort": {
         "message": "в $1",
+        "description": ""
+    },
+    "settingsThemeLabel": {
+        "message": "Тема",
+        "description": ""
+    },
+    "themeDark": {
+        "message": "Темна",
+        "description": ""
+    },
+    "themeLight": {
+        "message": "Светла",
+        "description": ""
+    },
+    "themeAuto": {
+        "message": "Автоматски",
+        "description": ""
+    },
+    "ModernRed": {
+        "message": "Модерна црвена",
+        "description": ""
+    },
+    "VintageBlue": {
+        "message": "Старомодна плава",
+        "description": ""
+    },
+    "toVintageBlue": {
+        "message": "Промени во Старомодно плав стил",
+        "description": ""
+    },
+    "DonateShort": {
+        "message": "Донирај",
+        "description": ""
+    },
+    "DonateLong": {
+        "message": "NoScript е Слободен Софтвер и не може да постои без твоја помош. Ве молиме донирајте сега!",
         "description": ""
     }
 }

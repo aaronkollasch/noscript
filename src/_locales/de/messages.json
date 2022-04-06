@@ -48,7 +48,7 @@
         "description": ""
     },
     "AllowPing": {
-        "message": "<A PING…> zulassen",
+        "message": "<A PING …> zulassen",
         "description": ""
     },
     "AllowViaBookmarks": {
@@ -80,7 +80,7 @@
         "description": ""
     },
     "BlockedItems": {
-        "message": "$1 von $2 Elementen blockiert.",
+        "message": "$1 von $2 Elementen blockiert",
         "description": ""
     },
     "BlockedObjects": {
@@ -112,7 +112,7 @@
         "description": ""
     },
     "ClearClickOpt": {
-        "message": "ClearClick Schutz auf Webseiten…",
+        "message": "ClearClick-Schutz auf Webseiten …",
         "description": ""
     },
     "ClearClickReport": {
@@ -180,7 +180,7 @@
         "description": ""
     },
     "Exceptions": {
-        "message": "Ausnahmen…",
+        "message": "Ausnahmen …",
         "description": ""
     },
     "Export": {
@@ -196,11 +196,11 @@
         "description": ""
     },
     "Hider": {
-        "message": "Hierher ziehen zum Verbergen.",
+        "message": "Zum Verbergen hierher ziehen.",
         "description": ""
     },
     "Reveal": {
-        "message": "Zum Abruf fehlender Schaltflächen hier klicken…",
+        "message": "Zum Zurückholen fehlender Schaltflächen hier klicken …",
         "description": ""
     },
     "ShowFullAddresses": {
@@ -212,7 +212,7 @@
         "description": ""
     },
     "NotEnforced": {
-        "message": "Einschränkungen deaktiviert",
+        "message": "Einschränkungen sind durch die Einstellungen des Benutzers deaktiviert: NoScript wird nichts auf dieser Seite blockieren!",
         "description": ""
     },
     "NoEnforcement": {
@@ -221,6 +221,10 @@
     },
     "Enforce": {
         "message": "Einschränkungen global aktivieren",
+        "description": ""
+    },
+    "EnforceOnRestart": {
+        "message": "Einschränkungen bei Browser-Neustart wiederherstellen",
         "description": ""
     },
     "NoEnforcementForTab": {
@@ -268,7 +272,7 @@
         "description": ""
     },
     "HttpsFaq": {
-        "message": "HTTPS FAQ…",
+        "message": "HTTPS-FAQ …",
         "description": ""
     },
     "HttpsFaq_accesskey": {
@@ -364,7 +368,7 @@
         "description": ""
     },
     "Options": {
-        "message": "Einstellungen…",
+        "message": "Einstellungen …",
         "description": ""
     },
     "Options_accesskey": {
@@ -464,11 +468,11 @@
         "description": ""
     },
     "Show": {
-        "message": "Zeige…",
+        "message": "Zeige …",
         "description": ""
     },
     "ShowConsole": {
-        "message": "Konsole anzeigen…",
+        "message": "Konsole anzeigen …",
         "description": ""
     },
     "ShowConsole_accesskey": {
@@ -636,7 +640,7 @@
         "description": ""
     },
     "XssFaq": {
-        "message": "XSS FAQ…",
+        "message": "XSS-FAQ …",
         "description": ""
     },
     "XssFaq_accesskey": {
@@ -700,15 +704,15 @@
         "description": ""
     },
     "caps": {
-        "message": "Aktiviert diese Funktionalitäten",
+        "message": "Folgendes zulassen:",
         "description": ""
     },
     "capsContext": {
-        "message": "Aktiviert diese Funktionalitäten bei Übereinstimmungen mit der Hauptseite",
+        "message": "Folgendes zulassen auf",
         "description": ""
     },
     "anySite": {
-        "message": "JEDE INTERNETSEITE",
+        "message": "JEDER SEITE",
         "description": ""
     },
     "cap_script": {
@@ -756,7 +760,7 @@
         "description": ""
     },
     "cap_other": {
-        "message": "sonstige",
+        "message": "Sonstiges",
         "description": ""
     },
     "changelog": {
@@ -880,7 +884,7 @@
         "description": ""
     },
     "siteInfo_tooltip": {
-        "message": "Mit mittlerer Maustaste oder Umschalt+Linke Maustaste klicken für Seiteninformationen...",
+        "message": "Klicken Sie mit mittlerer Maustaste oder Umschalttaste und linker Maustaste für Seiteninformationen …",
         "description": ""
     },
     "sponsor_tip": {
@@ -901,6 +905,42 @@
     },
     "versionShort": {
         "message": "v $1",
+        "description": ""
+    },
+    "settingsThemeLabel": {
+        "message": "Darstellung",
+        "description": ""
+    },
+    "themeDark": {
+        "message": "Dunkel",
+        "description": ""
+    },
+    "themeLight": {
+        "message": "Hell",
+        "description": ""
+    },
+    "themeAuto": {
+        "message": "Automatisch",
+        "description": ""
+    },
+    "ModernRed": {
+        "message": "Modern Rot",
+        "description": ""
+    },
+    "VintageBlue": {
+        "message": "Klassisch Blau",
+        "description": ""
+    },
+    "toVintageBlue": {
+        "message": "Stil »Klassisch Blau« wählen",
+        "description": ""
+    },
+    "DonateShort": {
+        "message": "Spenden",
+        "description": ""
+    },
+    "DonateLong": {
+        "message": "NoScript ist Freie Software und kann ohne Ihre Hilfe nicht fortbestehen. Bitte spenden Sie jetzt!",
         "description": ""
     }
 }

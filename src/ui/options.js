@@ -19,6 +19,10 @@
  */
 
 'use strict';
+
+document.querySelector("#version").textContent = _("Version",
+  browser.runtime.getManifest().version);
+
 (async () => {
 
   await UI.init();
@@ -26,8 +30,6 @@
   let policy = UI.policy;
   let contextStore = UI.contextStore;
 
-  let version = browser.runtime.getManifest().version;
-  document.querySelector("#version").textContent = _("Version", version);
   // simple general options
 
   let opt = UI.wireOption;
@@ -45,6 +47,8 @@
     }
     return disabled;
   });
+
+  opt("enforceOnRestart", "local");
 
   opt("auto", o => {
     if (o) {
@@ -144,9 +148,10 @@
   }
 
   opt("clearclick");
-  opt("debug", "local", b => {
-    document.body.classList.toggle("debug", b);
-    if (b) {
+  opt("debug", "local", o => {
+    let {checked} = o;
+    document.body.classList.toggle("debug", checked);
+    if (checked) {
       updateRawPolicyEditor();
       updateRawContextStoreEditor();
     }
@@ -157,6 +162,10 @@
   opt("showCountBadge", "local");
   opt("showCtxMenuItem", "local");
   opt("showFullAddresses", "local");
+
+  UI.wireChoice("theme", o => Themes.setup(o && o.value) );
+
+  opt("vintageTheme", async o => await (o ? Themes.setVintage(o.checked) : Themes.isVintage()));
 
   // PRESET CUSTOMIZER
   {
@@ -282,7 +291,7 @@
         UI.updateSettings({policy, contextStore});
         newSiteInput.value = "";
         sitesUI.render(currentPolicy.sites);
-        sitesUI.highlight(site);
+        sitesUI.hilite(site);
         sitesUI.onChange();
       }
     }, true);
@@ -297,6 +306,20 @@
     });
   }
 
+  window.setTimeout(() => {
+    // focus and/or hilite elements based on query string
+    let params = new URLSearchParams(location.search);
+    let el = key => {
+      let selector = params.get(key);
+      return selector && document.querySelector(selector);
+    }
+
+    let focusElement = el("focus");
+    if (focusElement) focusElement.focus();
+
+    let hiliteElement = el("hilite");
+    if (hiliteElement) UI.hilite(hiliteElement);
+  }, 1000);
 
   // UTILITY FUNCTIONS
 

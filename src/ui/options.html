@@ -14,19 +14,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <link rel="stylesheet" href="/lib/flextabs.css" />
 <link rel="stylesheet" href="options.css" />
 <link rel="stylesheet" href="whirlpool.css" />
+<link rel="stylesheet" href="ui.css" />
 <script src="/nscl/lib/browser-polyfill.js"></script>
 <script src="/nscl/common/UA.js"></script>
 <script src="/nscl/common/include.js"></script>
 <script src="/nscl/common/log.js"></script>
 <script src="/nscl/common/locale.js"></script>
+<script src="/common/themes.js"></script>
 <script src="/lib/flextabs.js"></script>
 <script src="/ui/ui.js"></script>
 </head>
 <body id="noscript-options">
 <div id="header">
+<div class="title">
 <h1>__MSG_OptionsLong__</h1>
-<div>
-<span id="version"></span>
+<span id="version">&nbsp;</span>
 </div>
 
 <div class="buttons">
@@ -36,36 +38,41 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </div>
 <button id="btn-export" accesskey="__MSG_Export_accesskey__">__MSG_Export__</button>
 <button id="btn-reset" accesskey="__MSG_Reset_accesskey__">__MSG_Reset__</button>
+<a class="donate button" href="https://noscript.net/donate" title="__MSG_DonateLong__">__MSG_DonateShort__</a>
 </div>
 </div>
-<section id="sect-io">
-
-</section>
-
 <div id="main-tabs" class="flextabs">
 
 <h3 class="flextabs__tab"><button class="flextabs__toggle">__MSG_SectionGeneral__</button></h3>
 <div class="flextabs__content flextabs__content--active--last">
   <section id="sect-general">
   <div class="opt-group">
-  <span id="global-opt">
-  <input type="checkbox" id="opt-global"><label for="opt-global" id="lbl-global">__MSG_NoEnforcement__</label>
-  </span>
-  <span id="auto-opt">
-  <input type="checkbox" class="enforcement_required" id="opt-auto"><label for="opt-auto" id="lbl-auto">__MSG_AutoAllowTopLevel__</label>
-  </span>
-  <span id="cascadeRestrictions-opt">
-  <input type="checkbox" class="enforcement_required" id="opt-cascadeRestrictions"><label for="opt-cascadeRestrictions" id="lbl-cascadeRestrictions">__MSG_CascadeRestrictions__</label>
-  </span>
-  <span id="containers-opt">
-  <input type="checkbox" class="enforcement_required" id="opt-containers"><label for="opt-containers" id="lbl-containers">Enable support for container tabs</label>
-  </span>
+    <span id="global-opt">
+    <input type="checkbox" id="opt-global"><label for="opt-global" id="lbl-global">__MSG_NoEnforcement__</label>
+    </span>
+    <span id="enforceOnRestart-opt">
+      <input type="checkbox" id="opt-enforceOnRestart"><label for="opt-enforceOnRestart" id="lbl-enforceOnRestart">__MSG_EnforceOnRestart__</label>
+    </span>
+    <span id="containers-opt">
+      <input type="checkbox" class="enforcement_required" id="opt-containers"><label for="opt-containers" id="lbl-containers">Enable support for container tabs</label>
+    </span>
   </div>
-
-  <fieldset class="enforcement_required">
-    <legend accesskey="__MSG_CustomizePresets_accesskey__">__MSG_CustomizePresets__</legend>
-    <div id="presets"></div>
-  </fieldset>
+  <div class="opt-group">
+    <span id="auto-opt">
+    <input type="checkbox" class="enforcement_required" id="opt-auto"><label for="opt-auto" id="lbl-auto">__MSG_AutoAllowTopLevel__</label>
+    </span>
+  </div>
+  <div class="opt-group">
+    <span id="cascadeRestrictions-opt">
+    <input type="checkbox" class="enforcement_required" id="opt-cascadeRestrictions"><label for="opt-cascadeRestrictions" id="lbl-cascadeRestrictions">__MSG_CascadeRestrictions__</label>
+    </span>
+  </div>
+  </section>
+  <section id="sect-presets">
+    <fieldset class="enforcement_required">
+      <legend accesskey="__MSG_CustomizePresets_accesskey__">__MSG_CustomizePresets__</legend>
+      <div id="presets"></div>
+    </fieldset>
   </section>
 </div>
 
@@ -98,13 +105,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <h3 class="flextabs__tab appearance_tab"><button class="flextabs__toggle">__MSG_SectionAppearance__</button></h3>
 <div class="flextabs__content appearance_tab">
-  <div class="opt-group desktop">
+  <div class="opt-group">
     <span id="showCtxMenuItem-opt">
     <input type="checkbox" id="opt-showCtxMenuItem">
     <label for="opt-showCtxMenuItem" id="lbl-showCtxMenuItem">__MSG_ShowCtxMenuItem__</label>
     </span>
   </div>
-  <div class="opt-group desktop">
+  <div class="opt-group">
     <span id="showCountBadge-opt">
     <input type="checkbox" id="opt-showCountBadge">
     <label for="opt-showCountBadge" id="lbl-showCountBadge">__MSG_ShowCountBadge__</label>
@@ -116,27 +123,35 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <label for="opt-showFullAddresses" id="lbl-showFullAddresses">__MSG_ShowFullAddresses__</label>
     </span>
   </div>
+  <section id="sect-themes">
+  <fieldset id="themes">
+    <legend>__MSG_settingsThemeLabel__</legend>
   <div class="opt-group">
+    <span id="theme-choice">
+     <input id="theme-dark" type="radio" name="theme" value="dark" /><label for="theme-dark">__MSG_themeDark__</label>
+     <input id="theme-light" type="radio"  name="theme" value="light"/><label for="theme-light">__MSG_themeLight__</label>
+     <input id="theme-auto" type="radio" name="theme" value="auto" checked="checked"/><label for="theme-auto">__MSG_themeAuto__</label>
+    </span>
+    <span id="vintageTheme-opt" title="__MSG_toVintageBlue__">
+      <label for="opt-vintageTheme" title="__MSG_ModernRed__">>__MSG_ModernRed__</label>
+          <label class="switch">
+            <input type="checkbox" id="opt-vintageTheme">
+            <span class="slider round"></span>
+            <span class="inner-label">__MSG_toVintageBlue__</span>
+          </label>
+      <label for="opt-vintageTheme" title="__MSG_VintageBlue__">__MSG_VintageBlue__</label>
+    </span>
     <span id="highContrast-opt">
     <input type="checkbox" id="opt-highContrast">
     <label for="opt-highContrast" id="lbl-highContrast">__MSG_HighContrast__</label>
     </span>
   </div>
+</fieldset>
+</section>
 </div>
 
 <h3 class="flextabs__tab"><button class="flextabs__toggle">__MSG_SectionAdvanced__</button></h3>
 <div class="flextabs__content">
-  <div id="xss-options" class="opt-group">
-  <span id="xss-opt">
-    <input type="checkbox" id="opt-xss"><label for="opt-xss" id="lbl-xss">__MSG_OptFilterXGet__</label>
-    <span id="xssFaq">(<a href="https://noscript.net/faq#xss" title="https://noscript.net/faq#xss">__MSG_XssFaq__</a>)</span>
-  </span>
-  <div id="xssChoices">
-  </div>
-  </div>
-  <div id="clearclick-options" class="opt-group">
-  <input type="checkbox" id="opt-clearclick"><label for="opt-clearclick" id="lbl-clearclick">ClearClick</label>
-  </div>
 
   <div id="tb-options" class="opt-group">
     <span id="overrideTorBrowserPolicy-opt">
@@ -145,6 +160,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
         ><span class="tor">__MSG_OptOverrideTorBrowserPolicy__</span><span class="not-tor">__MSG_OptIncognitoPerm__</span></label>
     </span>
   </div>
+
+  <div id="xss-options" class="opt-group">
+    <span id="xss-opt">
+      <input type="checkbox" id="opt-xss">
+      <label for="opt-xss" id="lbl-xss">__MSG_OptFilterXGet__
+        <span id="xssFaq">(<a href="https://noscript.net/faq#xss" title="https://noscript.net/faq#xss">__MSG_XssFaq__</a>)
+      </label>
+    </span>
+    <div id="xssChoices">
+    </div>
+    </div>
+    <div id="clearclick-options" class="opt-group">
+    <input type="checkbox" id="opt-clearclick"><label for="opt-clearclick" id="lbl-clearclick">ClearClick</label>
+    </div>
 
   <div id="update-options" class="opt-group">
     <span id="amnesticUpdates-opt">
@@ -157,23 +186,23 @@ SPDX-License-Identifier: GPL-3.0-or-later
   <div class="opt-group">
     <span><input type="checkbox" id="opt-debug"><label id="label-debug" for="opt-debug">Debug</label></span>
   </div>
-  <div id="debug-tools" class="debug browser-style">
-  <label for="policy">Policy:</label>
-  <div id="policy-error"></div>
-  <textarea id="policy" class="browser-style">
-  </textarea>
-  <div id="edit-context-store">
-  <label for="contextStore">ContextStore:</label>
-  <div id="context-store-error"></div>
-  <textarea id="context-store" class="browser-style">
-  </textarea>
-  </div>
-  </div>
-  </div>
   </section>
+  <div  id="debug-tools" class="debug">
+    <label for="policy">Policy:</label>
+    <div id="policy-error"></div>
+    <textarea id="policy" class="browser-style">
+    </textarea>
+    <div id="edit-context-store">
+      <label for="contextStore">ContextStore:</label>
+      <div id="context-store-error"></div>
+      <textarea id="context-store" class="browser-style">
+      </textarea>
+    </div>
+  </div>
+
 </div>
 </div>
-<script src="/lib/persistent-tabs.js"></script>
+<script src="/nscl/service/persistent-tabs.js"></script>
 <script src="options.js"></script>
 </body>
 </html>

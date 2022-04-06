@@ -4,17 +4,19 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+
+@import url("./common.css");
+
 html {
-  background: linear-gradient(to bottom, #e4f5fc 0%,#bfe8f9 41%,#9fd8ef 90%,#2ab0ed 100%) no-repeat;
+  background: linear-gradient(to bottom, var(--form-color1) 0, var(--bg-color2) 41%, var(--bg-color1) 94%, var(--hilite-color) 100%) no-repeat;
+  background-color: var(--bg-color1);
 }
 
 body {
   bottom: .8em;
-  font-family: sans-serif;
-  font-size: 12px;
-  color: #222;
   margin: 0px;
   padding: .8em;
+  background-color: transparent;
 }
 
 html.mobile > body {
@@ -29,17 +31,19 @@ html.mobile > body {
   text-align: left;
   margin: 0;
   line-height: 2em;
-  color: #048;
+  color: var(--accent-color);
   z-index: 500;
   padding: .8em .8em 0 .8em;
   display: block;
-  background: url(/img/icon96.png) no-repeat top right;
-  height: 96px;
+  background: var(--img-logo) no-repeat top right;
+  background-size: contain;
+  min-height: 5em;
 }
 
 #title {
-  margin-right: 96px;
-  font-size: 1.3em;
+  margin-right: 4em;
+  text-shadow: 0.06em 0.06em 0.06em rgba(0,0,0,.5);
+  font-size: 2em;
   bottom: 0;
   top: 0;
 }
@@ -67,7 +71,7 @@ html.mobile > body {
   font-size: 1em;
   text-align: justify;
   margin-bottom: 1.2em;
-  background: rgba(255,255,255,.5);
+  background: var(--focus-color);
 }
 #message.multiline p {
   margin: .1em;
@@ -97,7 +101,6 @@ html.mobile > body {
 }
 .choices label {
   display: block;
-  padding-bottom: .5em;
   word-break: break-all;
 }
 

@@ -212,7 +212,7 @@
         "description": ""
     },
     "NotEnforced": {
-        "message": "Beperkingen uitgeschakeld",
+        "message": "Beperkingen uitgeschakeld door instellingen van gebruiker: NoScript blokkeert niets op deze pagina!",
         "description": ""
     },
     "NoEnforcement": {
@@ -221,6 +221,10 @@
     },
     "Enforce": {
         "message": "Beperkingen overal inschakelen",
+        "description": ""
+    },
+    "EnforceOnRestart": {
+        "message": "Beperkingen herstellen bij browserherstart",
         "description": ""
     },
     "NoEnforcementForTab": {
@@ -901,6 +905,42 @@
     },
     "versionShort": {
         "message": "v $1",
+        "description": ""
+    },
+    "settingsThemeLabel": {
+        "message": "Thema",
+        "description": ""
+    },
+    "themeDark": {
+        "message": "Donker",
+        "description": ""
+    },
+    "themeLight": {
+        "message": "Licht",
+        "description": ""
+    },
+    "themeAuto": {
+        "message": "Auto",
+        "description": ""
+    },
+    "ModernRed": {
+        "message": "Modern rood",
+        "description": ""
+    },
+    "VintageBlue": {
+        "message": "Vintage blauw",
+        "description": ""
+    },
+    "toVintageBlue": {
+        "message": "Wisselen naar de stijl Vintage blauw",
+        "description": ""
+    },
+    "DonateShort": {
+        "message": "Doneren",
+        "description": ""
+    },
+    "DonateLong": {
+        "message": "NoScript is gratis software en kan niet bestaan zonder uw hulp. Doneer nu!",
         "description": ""
     }
 }

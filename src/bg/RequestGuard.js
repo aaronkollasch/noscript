@@ -141,12 +141,17 @@ var RequestGuard = (() => {
     _updateTabNow(tabId) {
       this._pendingTabs.delete(tabId);
       let records = this.map.get(tabId) || this.initTab(tabId);
+
       let {allowed, blocked, noscriptFrames} = records;
       let topAllowed = !(noscriptFrames && noscriptFrames[0]);
       let numAllowed = 0, numBlocked = 0, sum = 0;
       let report = this.types.map(t => {
-        let a = allowed[t] && allowed[t].length || 0, b = blocked[t] && blocked[t].length || 0, s = a + b;
-        numAllowed+= a, numBlocked += b, sum += s;
+        let a = allowed[t] && allowed[t].length || 0,
+            b = blocked[t] && blocked[t].length || 0,
+            s = a + b;
+        numAllowed += a;
+        numBlocked += b;
+        sum += s;
         return s && `<${t === "sub_frame" ? "frame" : t}>: ${b}/${s}`;
       }).filter(s => s).join("\n");
       let enforced = ns.isEnforced(tabId);
@@ -160,8 +165,10 @@ var RequestGuard = (() => {
         browserAction.setTitle({tabId, title: `NoScript (${numBlocked})`});
         return;
       }
-
-      browserAction.setIcon({tabId, path: {64: `/img/ui-${icon}64.png`}});
+      (async () => {
+        let iconPath = (await Themes.isVintage()) ? '/img/vintage' : '/img';
+        browserAction.setIcon({tabId, path: {64: `${iconPath}/ui-${icon}64.png`}});
+      })();
       browserAction.setBadgeText({tabId, text: showBadge ? numBlocked.toString() : ""});
       browserAction.setBadgeBackgroundColor({tabId, color: [128, 0, 0, 160]});
       browserAction.setTitle({tabId,
@@ -206,17 +213,26 @@ var RequestGuard = (() => {
       let seen = await ns.collectSeen(tabId);
       TabStatus.recordAll(tabId, seen);
     },
+    onUpdatedTab(tabId, changeInfo) {
+      if (changeInfo.url) {
+        TabStatus.initTab(tabId);
+      }
+    },
     onRemovedTab(tabId) {
       TabStatus.map.delete(tabId);
       TabStatus._originsCache.clear();
       TabStatus._pendingTabs.delete(tabId);
     },
   }
-  browser.tabs.onActivated.addListener(TabStatus.onActivatedTab);
-  browser.tabs.onRemoved.addListener(TabStatus.onRemovedTab);
+  for (let event of ["Activated", "Updated", "Removed"]) {
+    browser.tabs[`on${event}`].addListener(TabStatus[`on${event}Tab`]);
+  }
+
   let messageHandler = {
     async pageshow(message, sender) {
-      TabStatus.recordAll(sender.tab.id, message.seen);
+      if (sender.frameId === 0) {
+        TabStatus.recordAll(sender.tab.id, message.seen);
+      }
       return true;
     },
     violation({url, type}, sender) {
@@ -292,8 +308,9 @@ var RequestGuard = (() => {
           type, url, documentUrl, originUrl
       };
       if (tabId < 0) {
-        if (type === "script" && url.startsWith("https://") && documentUrl && documentUrl.startsWith("https://")) {
-          // service worker / importScripts()?
+        if ((policyType === "script" || policyType === "fetch") &&
+              url.startsWith("https://") && documentUrl && documentUrl.startsWith("https://")) {
+          // service worker request ?
           let payload = {request, allowed, policyType, serviceWorker: Sites.origin(documentUrl)};
           let recipient = {frameId: 0};
           for (let tabId of TabStatus.findTabsByOrigin(payload.serviceWorker)) {
@@ -422,28 +439,29 @@ var RequestGuard = (() => {
   }
 
   function checkLANRequest(request) {
-    if (request._lanChecked) return false;
-    request._lanChecked = true;
+    if (!ns.isEnforced(request.tabId)) return ALLOW;
     let {originUrl, url, cookieStoreId} = request;
     let policy = ns.getPolicy(cookieStoreId);
     if (originUrl && !Sites.isInternal(originUrl) && url.startsWith("http") &&
       !policy.can(originUrl, "lan", ns.policyContext(request))) {
       // we want to block any request whose origin resolves to at least one external WAN IP
       // and whose destination resolves to at least one LAN IP
-      let neverDNS = ns.local.isTorBrowser || !(UA.isMozilla && DNS.supported);
+      let {proxyInfo} = request; // see https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/proxy/ProxyInfo
+      let neverDNS = (proxyInfo && (proxyInfo.type && proxyInfo.type.startsWith("http") || proxyInfo.proxyDNS))
+                     || !(UA.isMozilla && DNS.supported);
       if (neverDNS) {
         // On Chromium we must do it synchronously: we need to sacrifice DNS resolution and check just numeric addresses :(
         // (the Tor Browser, on the other hand, does DNS resolution and boundary checks on its own and breaks the DNS API)
         return iputil.isLocalURI(url, false, neverDNS) && !iputil.isLocalURI(originUrl, true, neverDNS)
           ? blockLANRequest(request)
-          : false;
+          : ALLOW;
       }
       // Firefox does support asynchronous webRequest: let's return a Promise and perform DNS resolution.
       return new Promise(async (resolve, reject) => {
         try {
           resolve(await iputil.isLocalURI(url, false) && !(await iputil.isLocalURI(originUrl, true))
             ? blockLANRequest(request)
-            : listeners.onBeforeRequest(request)
+            : ALLOW
           );
         } catch (e) {
           reject(e);
@@ -454,21 +472,12 @@ var RequestGuard = (() => {
 
   const listeners = {
     onBeforeRequest(request) {
-      if (browser.runtime.onSyncMessage && browser.runtime.onSyncMessage.isMessageRequest(request)) return ALLOW;
-      normalizeRequest(request);
       try {
-
-        let {tabId} = request;
-        let enforced = ns.isEnforced(tabId);
-
-        if (enforced) {
-          let lanResponse = checkLANRequest(request);
-          if (lanResponse)  return lanResponse;
-        }
-
+        if (browser.runtime.onSyncMessage && browser.runtime.onSyncMessage.isMessageRequest(request)) return ALLOW;
+        normalizeRequest(request);
         initPendingRequest(request);
 
-        let {type, url, originUrl} = request;
+        let {tabId, type, url, originUrl} = request;
 
         if (type in policyTypesMap) {
           let previous = recent.find(request);
@@ -481,9 +490,12 @@ var RequestGuard = (() => {
 
           let policyType = policyTypesMap[type];
           let {documentUrl} = request;
-          if (!enforced) {
+          if (!ns.isEnforced(tabId)) {
             if (ns.unrestrictedTabs.has(tabId) && type.endsWith("frame") && url.startsWith("https:")) {
               TabStatus.addOrigin(tabId, url);
+            }
+            if (type !== "main_frame") {
+              Content.reportTo(request, true, policyType);
             }
             return ALLOW;
           }
@@ -516,7 +528,7 @@ var RequestGuard = (() => {
             }
             if (!allowed) {
               let capabilities = intersectCapabilities(
-                policy.get(url, documentUrl).perms,
+                policy.get(url, ns.policyContext(request)).perms,
                 request);
               allowed = !policyType || capabilities.has(policyType);
               if (allowed && request._dataUrl && type.endsWith("frame")) {
@@ -543,6 +555,10 @@ var RequestGuard = (() => {
         error(e);
       }
       return ALLOW;
+    },
+    onBeforeSendHeaders(request) {
+      normalizeRequest(request);
+      return checkLANRequest(request);
     },
     onHeadersReceived(request) {
       // called for main_frame, sub_frame and object
@@ -744,6 +760,7 @@ var RequestGuard = (() => {
       let filterDocs = {urls: allUrls, types: docTypes};
       let filterAll = {urls: allUrls};
       listen("onBeforeRequest", filterAll, ["blocking"]);
+      listen("onBeforeSendHeaders", filterAll, ["blocking"]);
 
       let mergingCSP = "getBrowserInfo" in browser.runtime;
       if (mergingCSP) {

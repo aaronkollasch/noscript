@@ -212,7 +212,7 @@
         "description": ""
     },
     "NotEnforced": {
-        "message": "限制已解除",
+        "message": "根据用户设置禁用了限制：NoScript 在此页面上不会拦截任何东西！",
         "description": ""
     },
     "NoEnforcement": {
@@ -221,6 +221,10 @@
     },
     "Enforce": {
         "message": "全局启用限制",
+        "description": ""
+    },
+    "EnforceOnRestart": {
+        "message": "浏览器重启时恢复限制",
         "description": ""
     },
     "NoEnforcementForTab": {
@@ -901,6 +905,42 @@
     },
     "versionShort": {
         "message": "v $1",
+        "description": ""
+    },
+    "settingsThemeLabel": {
+        "message": "主题",
+        "description": ""
+    },
+    "themeDark": {
+        "message": "深色",
+        "description": ""
+    },
+    "themeLight": {
+        "message": "亮",
+        "description": ""
+    },
+    "themeAuto": {
+        "message": "自动",
+        "description": ""
+    },
+    "ModernRed": {
+        "message": "现代红",
+        "description": ""
+    },
+    "VintageBlue": {
+        "message": "古董蓝",
+        "description": ""
+    },
+    "toVintageBlue": {
+        "message": "切换到古董蓝样式",
+        "description": ""
+    },
+    "DonateShort": {
+        "message": "捐赠",
+        "description": ""
+    },
+    "DonateLong": {
+        "message": "NoScript 是自由软件，没有你的帮助便无法存在。请考虑捐赠！",
         "description": ""
     }
 }

@@ -3,37 +3,33 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
+@import url(slider.css);
 
-/* @import url("chrome://browser/content/extension.css"); */
 body {
-  background: #eee url("/img/noscript-options.png") no-repeat fixed top right;
-  background-size: 8em;
+  background: var(--img-noscript-options) no-repeat fixed top right;
+  background-size: 7em;
   padding: 0 2em 0 0;
   margin: 0.5em 0.5em 0.5em 0.5em;
 }
-.mobile body {
-  background-size: 4em;
-  padding-right: 0;
-}
-
 
 #header {
   display: flex;
-  flex-flow: column;
+  flex-flow: row wrap;
   padding: 0;
   margin: 0 6em 0 0;
-  text-align: right;
+  align-items: center;
+  justify-content: space-between;
 }
 #header h1 {
-  color: #048;
-  text-shadow: 0.06em 0.06em 0.06em rgba(0,0,0,.5);
+  color: var(--accent-color);
+  text-shadow: 0.06em 0.06em 0.06em #0008;
   font-size: 2em;
   padding: 0;
   margin: 0;
   text-align: right;
 }
 #version {
-  color: #048;
+  color: var(--text-color);
   font-size: 0.75em;
   padding: 0;
   margin: 0 0 0.5em;
@@ -45,9 +41,11 @@ body {
   display: flex;
   flex-flow: row wrap;
   justify-content: flex-end;
-  width: 100%;
-  text-align: right;
-  margin: 0 0 2px 0;
+  margin: 0 0 1em 0;
+}
+
+.buttons :is(button, .button) {
+  margin: .5em;
 }
 
 #sect-general {
@@ -57,19 +55,18 @@ body {
   font-size: 1em;
 }
 
-#sect-general label, #sect-general button, #sect-general span {
-  white-space: nowrap;
+section fieldset {
+  margin: 1em 0;
+  padding: .5em 1em;
 }
 
-section form, section fieldset {
-  margin: .5em 0;
+section > form {
+  padding: 0 .5em;
 }
 
 fieldset:disabled {
   opacity: .5;
 }
-
-
 
 .sect-sites form {
   display: flex;
@@ -100,7 +97,7 @@ fieldset:disabled {
   margin-inline: .5em;
 }
 #copy-container-label {
-  margin-block: .5em;
+  margin-block: auto;
 }
 
 #policy {
@@ -109,7 +106,7 @@ fieldset:disabled {
   min-height: 20em;
   width: 90%;
 }
-.hide, div.debug {
+.hide, body:not(.debug) div.debug {
   display: none;
 }
 #context-store {
@@ -119,8 +116,9 @@ fieldset:disabled {
   width: 90%;
 }
 
-body.debug div.debug {
-  display: initial;
+#debug-tools {
+  padding-left: 2.5em;
+  font-weight: bold;
 }
 
 .error {
@@ -149,11 +147,13 @@ input, button {
 }
 
 button.add {
-  font-weight: bold;
+  font-size: 1.4em;
+  padding: .2em .4em;
 }
 
 #import-container {
   position: relative;
+  display: flex;
 }
 #file-import {
   position: absolute;
@@ -169,7 +169,7 @@ button.add {
 }
 
 #xssFaq {
-  padding: 0.5em 1em;
+  white-space: nowrap;
 }
 
 #clearclick-options {
@@ -194,29 +194,57 @@ button.add {
 }
 
 .flextabs__content, .flextabs__toggle[aria-expanded="true"] {
-  background-color: rgba(200, 200, 200, .5) !important;
-  border: 0 solid #888;
+  background-color: var(--tab-color2) !important;
+  border: 0 solid var(--fg--color1);
 }
 
 .flextabs__toggle {
   -moz-appearance: none;
-  border-width: 0 1px 0 0 !important;
+  border-width: 0 !important;
   margin: 0 4px 0 0;
-  background: #ccc;
-  outline-width: 1px 0 0 0 !important;
+  background-color: var(--tab-color1);
+  outline-width: 0 !important;
+  border-radius: 1em 1em 0 0;
+  padding: .4em .8em;
 }
 
+@media (max-width: 630px) {
+  body {
+    background-size: 8em ;
+    padding: 0;
+    margin: 0;
+  }
+  #header {
+    margin: .5em 8em 0 .5em;
+  }
+}
 
+@media (max-width: 440px) {
+  .flextabs__toggle {
+    border-radius: 1em;
+    margin: -1em 0 0 0;
+  }
+  .flextabs__toggle[aria-expanded="true"] {
+    font-weight: bold;
+    box-shadow: 1px 1px 1px inset;
+    z-index: 1;
+    position: relative;
+  }
+
+  body {
+    background-size: 6em;
+  }
+  #header {
+    margin: 0;
+  }
+  #header > .title {
+    margin-right: 6em;
+  }
+
+}
 
 .flextabs__content {
-  border-width: 0 1px 1px 0;
-  border-radius: 0 .5em 0 0;
   padding: .5em;
-}
-
-.flextabs__toggle {
-  border-radius: .2em .2em 0 0;
-  padding: .2em .4em;
 }
 
 #xss-options {
@@ -225,4 +253,20 @@ button.add {
 
 .mozwebext #xss-options {
   display: block;
+}
+
+#vintageTheme-opt {
+  background: url(/img/logo.svg) no-repeat center left, url(/img/vintage/logo.svg) no-repeat center right;
+  background-size: 2em auto, 2em auto;
+}
+label[for="opt-vintageTheme"] {
+	text-indent: -5000px;
+	padding: 0 1.2em;
+}
+
+.hc #vintageTheme-opt {
+  background: none;
+}
+.hc label[for="opt-vintageTheme"] {
+  display: none !important;
 }
