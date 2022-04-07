@@ -95,11 +95,15 @@ html:not(.mobile) #scrollable {
 }
 
 #top > .container-id {
-  text-align: left;
-  margin: .1em;
+  text-align: center;
+  align-items: center;
+  display: flex;
+  margin: .2em;
+  margin-block: auto;
   padding: .4em;
   font-size: 1.2em;
   border:1px solid lightgray;
+  border-radius: .3em;
 }
 
 .hider {
