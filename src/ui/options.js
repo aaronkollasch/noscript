@@ -252,6 +252,7 @@ document.querySelector("#version").textContent = _("Version",
       sitesUI.policy = currentPolicy;
       sitesUI.render(currentPolicy.sites);
     }
+    containerCopy.value = "blank";
   }
   containerCopy.onchange = copyContainer;
 
@@ -272,7 +273,7 @@ document.querySelector("#version").textContent = _("Version",
     }
     containerSelect.innerHTML = container_options;
     containerSelect.value = cookieStoreId;
-    containerCopy.innerHTML = container_options;
+    containerCopy.innerHTML = "<option value=blank></option>" + container_options;
   }
   containerSelect.onfocus = updateContainerOptions;
   containerCopy.onfocus = updateContainerOptions;
