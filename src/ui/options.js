@@ -207,6 +207,11 @@
 
   async function copyContainer() {
     cookieStoreId = containerSelect.value;
+    if (cookieStoreId == "default") {
+      alert("Cannot replace the default policy.")
+      containerCopy.value = "blank";
+      return;
+    }
     let copyCookieStoreId = containerCopy.value;
     let copyContainerName = containerCopy.options[containerCopy.selectedIndex].text;
     let copyPolicy = await UI.getPolicy(copyCookieStoreId);
