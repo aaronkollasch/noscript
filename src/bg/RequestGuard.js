@@ -556,10 +556,21 @@ var RequestGuard = (() => {
       }
       return ALLOW;
     },
+
     onBeforeSendHeaders(request) {
       normalizeRequest(request);
-      return checkLANRequest(request);
+      let lanRes = checkLANRequest(request);
+      if (!UA.isMozilla) return lanRes; // Chromium doesn't support async blocking suspension, stop here
+      if (lanRes === ABORT) return ABORT;
+      // redirection loop test
+      let pending = pendingRequests.get(request.requestId);
+      if (pending && pending.redirected && pending.redirected.url === request.url) {
+        return lanRes; // don't go on stripping cookies if we're in a redirection loop
+      }
+      let chainNext = r => r === ABORT ? r : TabGuard.check(request);
+      return lanRes instanceof Promise ? lanRes.then(chainNext) : chainNext(lanRes);
     },
+
     onHeadersReceived(request) {
       // called for main_frame, sub_frame and object
 
@@ -655,6 +666,7 @@ var RequestGuard = (() => {
       let {requestId, url, tabId, frameId, type} = request;
       if (type === "main_frame") {
         TabStatus.initTab(tabId);
+        TabGuard.postCheck(request);
       }
       let scriptBlocked = request.responseHeaders.some(
         h => csp.isMine(h) && csp.blocks(h.value, "script")
@@ -687,9 +699,11 @@ var RequestGuard = (() => {
           }
         }
       }
+      TabGuard.postCheck(request);
     },
     onErrorOccurred(request) {
       pendingRequests.delete(request.requestId);
+      TabGuard.postCheck(request);
     }
   };
   function fakeRequestFromCSP(report, request) {
@@ -760,7 +774,7 @@ var RequestGuard = (() => {
       let filterDocs = {urls: allUrls, types: docTypes};
       let filterAll = {urls: allUrls};
       listen("onBeforeRequest", filterAll, ["blocking"]);
-      listen("onBeforeSendHeaders", filterAll, ["blocking"]);
+      listen("onBeforeSendHeaders", filterAll, ["blocking",  "requestHeaders"]);
 
       let mergingCSP = "getBrowserInfo" in browser.runtime;
       if (mergingCSP) {

@@ -94,7 +94,7 @@ var UI = (() => {
     async pullSettings() {
       Messages.send("broadcastSettings", {tabId: UI.tabId});
     },
-    async updateSettings({policy, contextStore, xssUserChoices, unrestrictedTab, local, sync, reloadAffected}) {
+    async updateSettings({policy, contextStore, xssUserChoices, unrestrictedTab, local, sync, reloadAffected, command}) {
       if (policy) policy = policy.dry(true);
       if (contextStore) contextStore = contextStore.dry(true);
       return await Messages.send("updateSettings", {
@@ -106,6 +106,7 @@ var UI = (() => {
         sync,
         reloadAffected,
         tabId: UI.tabId,
+        command
       });
     },
 
