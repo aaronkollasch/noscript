@@ -20,15 +20,15 @@
 
 (async () => {
   document.documentElement.classList.toggle("mobile", !!UA.mobile);
-  window.bg = await browser.runtime.getBackgroundPage();
-  ["Prompts"]
-    .forEach(p => window[p] = bg[p]);
-  let data = Prompts.promptData;
+  let data = await Messages.send("getPromptData");
   debug(data);
   if (!data) {
     error("Missing promptData");
     window.close();
     return;
+  }
+  let done = () => {
+    Messages.send("promptDone", data);
   }
   let {title, message, options, checks, buttons} = data.features;
 
@@ -99,7 +99,7 @@
   renderInputs("#checks", checks, "checkbox", "flag");
   renderInputs("#buttons", buttons, "button", "button");
   addEventListener("unload", e => {
-    data.done();
+    done();
   });
 
   let buttonClicked = e => {
@@ -109,7 +109,7 @@
     result.option = option && parseInt(option.value);
     result.checks = [...document.querySelectorAll('#checks [type="checkbox"]:checked')]
       .map(c => parseInt(c.value));
-    data.done();
+    done();
   };
   for (let b of document.querySelectorAll("#buttons button")) {
     b.addEventListener("click", buttonClicked);
@@ -128,7 +128,7 @@
     }
   });
 
-  let resize = async e => {
+  let fitHeight = async e => {
     if (!("windows" in browser)) {
       // tabbed (mobile?) - ensure buttons are visible
       document.querySelector("#buttons").scrollIntoView();
@@ -136,15 +136,18 @@
     }
     let win = await browser.windows.getCurrent();
     let delta = document.documentElement.offsetHeight - window.innerHeight;
-    let geometry = {
-      width: win.width, height: win.height + delta,
-      left: win.left, top: win.top - Math.round(delta / 2)
-    };
-    for (let j = 2; j-- > 0;) await browser.windows.update(win.id, geometry);
+    for (let attempts = 2; attempts-- > 0;) {
+      await browser.windows.update(win.id, {
+        height: win.height + delta,
+        top: win.top - Math.round(delta / 2),
+        focused: false
+      });
+    }
+    await browser.windows.update(win.id, {focused: true});
   }
   if (document.readyState === "complete") {
-    resize();
+    fitHeight();
   } else {
-    window.addEventListener("load", resize);
+    window.addEventListener("load", fitHeight);
   }
 })();

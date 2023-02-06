@@ -176,6 +176,12 @@
   "EnforceForTab": {
     "message": "Enable restrictions for this tab"
   },
+  "toggleEnforcementForTab": {
+    "message": "Toggle restrictions enforcement for current tab"
+  },
+  "pagePermissionsUI": {
+    "message": "Configure current page's permissions"
+  },
   "HighContrast": {
     "message": "High contrast"
   },

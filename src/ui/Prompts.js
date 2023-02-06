@@ -23,16 +23,27 @@ var Prompts = (() => {
   var promptData;
   var backlog = [];
 
+  Messages.addHandler({
+    getPromptData() { return Prompts.promptData },
+    promptDone(data) {
+      let promptData = promptDataMap.get(data.id);
+      if (promptData) {
+        Object.assign(promptData, data).done();
+      }
+    }
+  });
+
   class WindowManager {
     async open(data) {
       promptData = data;
       this.close();
-      let {width, height} = data.features;
+      let {width, height, left, top, parent = await browser.windows.getCurrent() } = data.features;
       let options = {
         url: browser.runtime.getURL("ui/prompt.html"),
-        type: "panel",
+        type: "popup",
         width,
         height,
+        focused: false, // initially in the background while sizing
       };
       if (UA.isMozilla) {
         options.allowScriptsToClose = true;
@@ -42,15 +53,31 @@ var Prompts = (() => {
         this.currentTab = await browser.tabs.create({url: options.url});
         return;
       }
-      this.currentWindow = await browser.windows.create(options);
-      // work around for https://bugzilla.mozilla.org/show_bug.cgi?id=1330882
-      let {left, top, width: cw, height: ch} = this.currentWindow;
-      if (width && height && cw !== width || ch !== height) {
-        left += Math.round((cw - width) / 2);
-        top += Math.round((ch - height) / 2);
-        for (let attempts = 2; attempts-- > 0;) // top gets set only 2nd time, moz bug?
-          await browser.windows.update(this.currentWindow.id,
-              {left, top, width, height});
+
+      let popup = this.currentWindow = await browser.windows.create(options);
+
+      if (parent) {
+        // center to the given parent window (default last focused browser tab)
+        if (left === undefined) left = Math.round(parent.left + (parent.width - popup.width) / 2);
+        if (top === undefined) top = Math.round(parent.top + (parent.height - popup.height) / 2);
+      } else {
+        // features.parent explicitly nulled: use given left & top or default to auto-centering on main screen
+        if (left === undefined) ({left} = popup);
+        if (top === undefined) ({top} = popup);
+      }
+
+      // work around for letterboxing changes (https://bugzilla.mozilla.org/show_bug.cgi?id=1330882)
+      let {width: popupWidth, height: popupHeight} = popup;
+      if (width && height && (popupWidth !== width || popupHeight !== height)) {
+        left += Math.round((popupWidth - width) / 2);
+        top += Math.round((popupHeight - height) / 2);
+      }
+
+      for (let attempts = 2; attempts-- > 0;) // position gets set only 2nd time, moz bug?
+        await browser.windows.update(popup.id,
+          {left, top, width, height, focused: false});
+      if (parent) {
+        await browser.windows.update(parent.id, {focused: true});
       }
     }
     async close() {
@@ -82,6 +109,8 @@ var Prompts = (() => {
   }
 
   var winMan = new WindowManager();
+  var id = 0;
+  var promptDataMap = new Map();
   var Prompts = {
     DEFAULTS: {
       title: "",
@@ -97,7 +126,9 @@ var Prompts = (() => {
     async prompt(features) {
       features = Object.assign({}, this.DEFAULTS, features || {});
       return new Promise((resolve, reject) => {
+        ++id;
         let data = {
+          id,
           features,
           result: {
             button: -1,
@@ -105,6 +136,7 @@ var Prompts = (() => {
             option: null,
           },
           done() {
+            promptDataMap.delete(this.id);
             this.done = () => {};
             winMan.close();
             resolve(this.result);
@@ -116,6 +148,7 @@ var Prompts = (() => {
             }
           }
         };
+        promptDataMap.set(id, data);
         if (promptData) {
           backlog.push(data);
           switch(promptData.features.multiple) {

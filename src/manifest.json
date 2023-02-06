@@ -8,7 +8,7 @@
       "strict_min_version": "59.0"
     }
   },
-  "version": "11.4.10rc2",
+  "version": "11.4.16rc1",
   "description": "__MSG_Description__",
   "incognito": "spanning",
 
@@ -116,16 +116,10 @@
     },
     {
       "run_at": "document_start",
-      "matches": ["ftp://*/*"],
-      "js": [
-        "content/ftp.js"
-      ]
-    },
-    {
-      "run_at": "document_start",
       "matches": ["file://*/*", "ftp://*/*"],
       "all_frames": true,
       "js": [
+        "content/ftp.js",
         "lib/DocumentFreezer.js",
         "content/syncFetchPolicy.js"
       ]
@@ -146,16 +140,16 @@
   },
 
   "commands": {
-    "_execute_browser_action": {
-      "description": "NoScript UI",
+    "openPageUI": {
+      "description": "__MSG_pagePermissionsUI__",
       "suggested_key": {
         "default": "Alt+Shift+N"
       }
     },
-    "togglePermissions": {
-      "description": "Toggle permissions",
+    "toggleEnforcementForTab": {
+      "description": "__MSG_toggleEnforcementForTab__",
       "suggested_key": {
-        "default": "Ctrl+Shift+T"
+        "default": "Alt+Shift+Space"
       }
     }
   }

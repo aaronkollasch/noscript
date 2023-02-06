@@ -72,8 +72,13 @@ var UI = (() => {
               if (!UI.local.debug) {
                 debug = () => {}; // be quiet!
               }
-              document.documentElement.classList.toggle("tor", !!UI.local.isTorBrowser);
               if (UI.local.isTorBrowser) {
+                let label = document.querySelector("span.tor");
+                if (label) {
+                  label.textContent = label.textContent.replace(/\bTor Browser\b/g,
+                    (await browser.runtime.getBrowserInfo()).name)
+                }
+                document.documentElement.classList.add("tor");
                 Sites.onionSecure = true;
               }
             }
@@ -92,7 +97,12 @@ var UI = (() => {
       debug("Imported", Policy, ContextStore);
     },
     async pullSettings() {
-      Messages.send("broadcastSettings", {tabId: UI.tabId});
+      try {
+        Messages.send("broadcastSettings", {tabId: UI.tabId});
+      } catch (e) {
+        // brutal work-around for background page misteriously being unloaded sometimes by Firefox
+        browser.runtime.reload();
+      }
     },
     async updateSettings({policy, contextStore, xssUserChoices, unrestrictedTab, local, sync, reloadAffected, command}) {
       if (policy) policy = policy.dry(true);
@@ -165,12 +175,11 @@ var UI = (() => {
       browser.tabs.create({url});
     },
 
+    getChoiceElements(name) {
+      return document.querySelectorAll(`input[type=radio][name="${name}"]`);
+    },
     wireChoice(name, storage = "sync", onchange) {
-      let inputs = document.querySelectorAll(`input[type=radio][name="${name}"]`);
-      if (inputs.length === 0) {
-        error(`Radio button w/ name "${name}" not found.`);
-        return;
-      }
+      let inputs = UI.getChoiceElements(name);
       if (typeof storage === "function") {
         (async() => {
           let value = await storage(null);
@@ -194,8 +203,11 @@ var UI = (() => {
       }
     },
 
+    getOptionElement(name) {
+      return document.querySelector(`#opt-${name}`);
+    },
     wireOption(name, storage = "sync", onchange) {
-      let input = document.querySelector(`#opt-${name}`);
+      let input = UI.getOptionElement(name);
       if (!input) {
         error(`Checkbox w/ id "opt-${name}" not found.`);
         return;

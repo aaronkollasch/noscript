@@ -105,28 +105,23 @@
   };
 
   let Commands = {
-    async openPageUI() {
-      if (ns.popupOpening) return;
-      ns.popupOpening = true;
-      ns.popupOpened = false;
-      let openPanel = async () => {
-        ns.popupOpening = false;
-        if (ns.popupOpened) return;
-        messageHandler.openStandalonePopup();
-      };
-      try {
-        await browser.browserAction.openPopup();
-        setTimeout(openPanel, 500);
-        return;
-      } catch (e) {
-        openPanel();
-        debug(e);
-      }
+    openPageUI() {
+      messageHandler.openStandalonePopup();
     },
 
-    togglePermissions() {},
-    install() {
-      if ("command" in browser) {
+    async toggleEnforcementForTab() {
+      let [tab] = (await browser.tabs.query({
+        currentWindow: true,
+        active: true
+      }));
+      if (tab) {
+        let toggle = ns.unrestrictedTabs.has(tab.id) ? "delete" : "add";
+        ns.unrestrictedTabs[toggle](tab.id);
+        browser.tabs.reload(tab.id);
+      }
+    },
+    async install() {
+      if ("commands" in browser) {
         // keyboard shortcuts
         browser.commands.onCommand.addListener(cmd => {
           if (cmd in Commands) {
@@ -139,7 +134,7 @@
         toggleCtxMenuItem();
         browser.contextMenus.onClicked.addListener((info, tab) => {
           if (info.menuItemId == ctxMenuId) {
-            this.openPageUI();
+            messageHandler.openStandalonePopup(tab);
           }
         });
       }
@@ -211,24 +206,42 @@
         ns.computeChildPolicy)(...arguments);
     },
 
-    async openStandalonePopup() {
-      let [tab] = (await browser.tabs.query({
+    async openStandalonePopup(tab) {
+      if (!tab) tab = (await browser.tabs.query({
         currentWindow: true,
         active: true
-      }));
+      }))[0];
 
       if (!tab || tab.id === -1) {
         log("No tab found to open the UI for");
         return;
       }
-      let win = await browser.windows.getCurrent();
+      let win = await browser.windows.get(tab.windowId);
+      let width = 610, height = 400;
       browser.windows.create({
         url: popupFor(tab.id),
-        width: 800,
-        height: 600,
-        top: win.top + 48,
-        left: win.left + 48,
+        width,
+        height,
+        top: win.top + Math.round((win.height - height) / 2),
+        left: win.left +  Math.round((win.width - width) / 2),
         type: "panel"
+      });
+    },
+    async getTheme() {
+      return (await Themes.isVintage()) ? "vintage" : "";
+    },
+    async fetchResource({url}) {
+      url = browser.runtime.getURL(url);
+      const blob = await (await fetch(url)).blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          resolve(reader.result);
+        };
+        reader.onerror = e => {
+          reject(reader.error);
+        };
+        reader.readAsDataURL(blob);
       });
     },
   };
