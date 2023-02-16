@@ -100,7 +100,7 @@
 
       let asyncFetch = (async () => {
         let policy = null;
-        for (let attempts = 10; !(policy || this.policy) && attempts-- > 0;) {
+        for (let attempts = 100; !(policy || this.policy) && attempts-- > 0;) {
           try {
             debug(`Retrieving policy asynchronously (${attempts} attempts left).`);
             policy = await Messages.send(msg.id, msg) || this.domPolicy;
@@ -116,27 +116,6 @@
         asyncFetch();
         return;
       }
-      debug(`Synchronously fetching policy for ${url}.`);
-      let policy = null;
-      let attempts = 100;
-      let refetch = () => {
-        try {
-          policy = browser.runtime.sendSyncMessage(msg) || this.domPolicy;
-        } catch (e) {
-          error(e);
-        }
-        if (policy) {
-          setup(policy);
-        } else if (attempts-- > 0) {
-          debug(`Couldn't retrieve policy synchronously (${attempts} attempts left).`);
-          if (asyncFetch) {
-            asyncFetch();
-            asyncFetch = null;
-          }
-          queueMicrotask(refetch);
-        }
-      };
-      refetch();
     },
 
     setup(policy) {
