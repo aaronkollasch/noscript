@@ -56,7 +56,7 @@
         "description": ""
     },
     "AlwaysBlockUntrustedContent": {
-        "message": "Zablokuj każdy obiekt pochodzący z witryny oznaczonej jako niezaufany",
+        "message": "Zablokuj każdy obiekt pochodzący z witryny oznaczonej jako niezaufana",
         "description": ""
     },
     "SectionAppearance": {
@@ -156,7 +156,7 @@
         "description": ""
     },
     "Default": {
-        "message": "Domyślne",
+        "message": "Domyślnie",
         "description": ""
     },
     "DefaultPolicies": {
@@ -235,6 +235,14 @@
         "message": "Włącz ograniczenia dla tej karty",
         "description": ""
     },
+    "toggleEnforcementForTab": {
+        "message": "Przełącz egzekwowanie ograniczeń dla bieżącej karty",
+        "description": ""
+    },
+    "pagePermissionsUI": {
+        "message": "Skonfiguruj uprawnienia dla bieżącej strony",
+        "description": ""
+    },
     "HighContrast": {
         "message": "Wysoki kontrast",
         "description": ""
@@ -300,7 +308,7 @@
         "description": ""
     },
     "OptAmnesticUpdates": {
-        "message": "Cofnij tymczasowe uprawnienia do aktualizacji NoScript, nawet jeśli przeglądarka nie zostanie ponownie uruchomiona",
+        "message": "Cofnij tymczasowe uprawnienia podczas aktualizacji NoScript, nawet jeśli przeglądarka nie jest ponownie uruchomiona",
         "description": ""
     },
     "KeepLocked": {
@@ -532,19 +540,19 @@
         "description": ""
     },
     "Trusted": {
-        "message": "Zaufane",
+        "message": "Zaufana",
         "description": ""
     },
     "Trusted_temporary": {
-        "message": "Tymczas. ZAUFANE",
+        "message": "Tymczas. ZAUFANA",
         "description": ""
     },
     "Trusted_permanent": {
-        "message": "ZAUFANE",
+        "message": "ZAUFANA",
         "description": ""
     },
     "TrustedPagesAdj": {
-        "message": "zaufane",
+        "message": "zaufana",
         "description": ""
     },
     "Uninstall": {
@@ -564,7 +572,7 @@
         "description": ""
     },
     "Untrust": {
-        "message": "Oznacz jako Niezaufane",
+        "message": "Oznacz jako Niezaufaną",
         "description": ""
     },
     "Untrust_accesskey": {
@@ -572,11 +580,11 @@
         "description": ""
     },
     "Untrusted": {
-        "message": "Niezaufane",
+        "message": "Niezaufana",
         "description": ""
     },
     "UntrustedPagesAdj": {
-        "message": "niezaufane",
+        "message": "niezaufana",
         "description": ""
     },
     "WebAddress": {

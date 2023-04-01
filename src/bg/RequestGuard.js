@@ -1,7 +1,7 @@
 /*
  * NoScript - a Firefox extension for whitelist driven safe JavaScript execution
  *
- * Copyright (C) 2005-2022 Giorgio Maone <https://maone.net>
+ * Copyright (C) 2005-2023 Giorgio Maone <https://maone.net>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -254,15 +254,16 @@ var RequestGuard = (() => {
       let TAG = `<${policyType.toUpperCase()}>`;
       let origin = Sites.origin(url);
       let {siteKey} = Sites.parse(url);
-      let options;
-      if (siteKey === origin) {
-        origin = new URL(url).protocol;
-      }
-      options = [
-        {label: _("allowLocal", siteKey), checked: true},
-        {label: _("allowLocal", origin)},
-        {label: _("CollapseBlockedObjects")},
+      const options =  [
+        {label: _("allowLocal", siteKey), checked: true}
       ];
+      if (!url.startsWith("blob:")) {
+        if (siteKey === origin) {
+          origin = new URL(url).protocol;
+        }
+        options.push({label: _("allowLocal", origin)});
+      }
+      options.push({label: _("CollapseBlockedObjects")});
       let t = u => `${TAG}@${u}`;
       let ret = await Prompts.prompt({
         title: _("BlockedObjects"),

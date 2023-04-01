@@ -1,7 +1,7 @@
 /*
  * NoScript - a Firefox extension for whitelist driven safe JavaScript execution
  *
- * Copyright (C) 2005-2021 Giorgio Maone <https://maone.net>
+ * Copyright (C) 2005-2023 Giorgio Maone <https://maone.net>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -85,7 +85,7 @@
         return;
       }
 
-      if (origin !== 'null' && window.location.origin !== origin) {
+      if (origin !== 'null' && (window.location.origin !== origin || url.startsWith(`blob:${origin}/`))) {
         debug("Fetching policy for actual URL %s (was %s)", origin, url);
         url = origin;
       }

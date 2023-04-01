@@ -1,7 +1,7 @@
 /*
  * NoScript - a Firefox extension for whitelist driven safe JavaScript execution
  *
- * Copyright (C) 2005-2021 Giorgio Maone <https://maone.net>
+ * Copyright (C) 2005-2023 Giorgio Maone <https://maone.net>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -73,10 +73,14 @@ var UI = (() => {
                 debug = () => {}; // be quiet!
               }
               if (UI.local.isTorBrowser) {
-                let label = document.querySelector("span.tor");
+                const label = document.querySelector("span.tor");
                 if (label) {
-                  label.textContent = label.textContent.replace(/\bTor Browser\b/g,
-                    (await browser.runtime.getBrowserInfo()).name)
+                  const browserName = (await browser.runtime.getBrowserInfo()).name;
+                  if (browserName !== "Firefox") {
+                    label.textContent = label.textContent.replace(/\bTor Browser\b/g,
+                      browserName.replace(/([\w])(Browser)$/, "$1 $2")
+                    );
+                  }
                 }
                 document.documentElement.classList.add("tor");
                 Sites.onionSecure = true;

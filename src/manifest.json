@@ -8,7 +8,7 @@
       "strict_min_version": "59.0"
     }
   },
-  "version": "11.4.16rc3",
+  "version": "11.4.21",
   "description": "__MSG_Description__",
   "incognito": "spanning",
 
@@ -110,6 +110,7 @@
         "content/staticNS.js",
         "/nscl/content/media.js",
         "/nscl/content/webglHook.js",
+        "/nscl/content/promptHook.js",
         "content/embeddingDocument.js",
         "content/content.js"
       ]
@@ -149,7 +150,8 @@
     "toggleEnforcementForTab": {
       "description": "__MSG_toggleEnforcementForTab__",
       "suggested_key": {
-        "default": "Alt+Shift+Space"
+        "default": "Alt+Shift+Space",
+        "windows": "Alt+Shift+Comma"
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2022 Giorgio Maone <https://maone.net>
+ * Copyright (C) 2005-2023 Giorgio Maone <https://maone.net>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -9,7 +9,7 @@ body {
   background-color: var(--bg-color2);
   color: var(--text-color);
   font-size: 12px;
-  font-family: sistem-ui, sans-serif;
+  font-family: system-ui, sans-serif;
   font: use-system-font;
 }
 

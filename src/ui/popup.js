@@ -1,7 +1,7 @@
 /*
  * NoScript - a Firefox extension for whitelist driven safe JavaScript execution
  *
- * Copyright (C) 2005-2022 Giorgio Maone <https://maone.net>
+ * Copyright (C) 2005-2023 Giorgio Maone <https://maone.net>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -69,7 +69,14 @@ addEventListener("unload", e => {
       } catch (e) {
         close();
       }
-      addEventListener("blur", close);
+      if (browser.windows) {
+        const myWinId = (await browser.windows.getCurrent()).id;
+        browser.windows.onFocusChanged.addListener(windowId => {
+          if (windowId !== browser.windows.WINDOW_ID_NONE && myWinId !== windowId) {
+            close();
+          }
+        });
+      }
     } else {
       tabId = tab.id;
     }
