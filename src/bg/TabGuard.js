@@ -22,12 +22,33 @@
 var TabGuard = (() => {
   (async () => { await include(["/nscl/service/TabCache.js", "/nscl/service/TabTies.js"]); })();
 
+  const anonymizedTabs = new Map();
+  browser.tabs.onRemoved.addListener(tab => {
+    anonymizedTabs.delete(tab.id);
+  });
+
+  const anonymizedRequests = new Set();
+
   let allowedGroups, filteredGroups;
   let forget = () => {
     allowedGroups = {};
     filteredGroups = {};
   };
   forget();
+
+  function mergeGroups(groups,
+    {tabDomain, otherDomains}, /* anonymizedTabInfo */
+    bidirectional = false) {
+    const currentGroup = groups[tabDomain] || (groups[tabDomain] = new Set());
+    for (let d of otherDomains) {
+      currentGroup.add(d);
+    }
+    if (bidirectional) {
+      for (let d of otherDomains)  {
+        (groups[d] || (groups[d] = new Set())).add(tabDomain);
+      }
+    }
+  }
 
   const AUTH_HEADERS_RX = /^(?:authorization|cookie)/i;
 
@@ -48,9 +69,12 @@ var TabGuard = (() => {
 
   return {
     forget,
-    check(request) {
+    // must be called from a webRequest.onBeforeSendHeaders blocking listener
+    onSend(request) {
       const mode = ns.sync.TabGuardMode;
       if (mode === "off" || !request.incognito && mode!== "global") return;
+
+      anonymizedRequests.delete(request.id);
 
       const {tabId, type, url, originUrl} = request;
 
@@ -64,32 +88,46 @@ var TabGuard = (() => {
 
       const mainFrame = type === "main_frame";
       if (mainFrame) {
+        anonymizedTabs.delete(tabId);
         let headers = flattenHeaders(requestHeaders);
         let shouldCut = false;
+        let safeAuth = false;
         if (headers["sec-fetch-user"] === "?1") {
           // user-activated navigation
           switch(headers["sec-fetch-site"]) {
             case "same-site":
             case "same-origin":
-              // cut only if same site & same tab
+              // Same site manual navigation:
+              // cut only if same tab (prevents automatic redirections to victim sites in new tabs)
               shouldCut = tab && originUrl === tab.url && ![...TabTies.get(tabId)]
                 .filter(tid => tid !== tabId).map(TabCache.get)
                 .some(t => t && t.url === originUrl);
+              // either way we can send authorization data
+              safeAuth = true;
               break;
             case "none":
               // nav bar or bookmark
-              shouldCut = true;
+              safeAuth = shouldCut = true;
               break;
+            default:
+              // cut only on manual reloads
+              safeAuth = shouldCut = tab && tab.url === request.url && tab.active;
           }
         }
         if (shouldCut) {
-          debug("[TabGuard] User-typed, bookmark or user-activated same-site-same-tab navigation: scheduling tab ties cut.", tabId, request);
+          debug("[TabGuard] User-typed, bookmark or user-activated same-site-same-tab navigation: scheduling tab ties cut and loading with auth.", tabId, request);
           scheduledCuts.add(request.requestId);
-          return;
         } else {
           debug("[TabGuard] Automatic or cross-site navigation, keeping tab ties.", tabId, request);
           scheduledCuts.delete(request.requestId);
         }
+        if (safeAuth) {
+          debug("[TabGuard] User-activated same-site navigation, loading with auth.", tabId, request);
+          return;
+        }
+      } else if (!anonymizedTabs.has(tabId)) {
+        // short circuit requests in non-anonymized tabs
+        return;
       }
 
       let targetDomain = getDomain(url);
@@ -126,12 +164,15 @@ var TabGuard = (() => {
             }
             // If it's about:blank and it has got an opener, let's assume the opener
             // is the real origin and it's using the empty tab to run scripts.
-            if (tab.url === "about:blank")  {
-              if (tab.openerTabId > 0) {
-                let openerTab = TabCache.get(tab.openerTabId);
-                if (openerTab) {
-                  tab.url = openerTab.url;
-                }
+            while (tab.url === "about:blank")  {
+              if (!tab.openerTabId) {
+                break;
+              }
+              const openerTab = TabCache.get(tab.openerTabId);
+              if (openerTab) {
+                tab.url = openerTab.url;
+              } else {
+                break;
               }
             }
             if (tab.url !== "about:blank") {
@@ -139,10 +180,28 @@ var TabGuard = (() => {
               if (!ns.policy.can(tab.url, "script")) return;
             }
           }
+          if (!tab._contentType) {
+            try {
+              tab._contentType = await browser.tabs.executeScript(tab.id, {
+                runAt: "document_start",
+                code: "document.contentType"
+              });
+            } catch (e) {
+              // We don't have permissions to run in this tab: privileged!
+              debug(e);
+              return;
+            }
+          }
+          if (!/(?:(?:x|ht)ml|svg)\b/i.test(tab._contentType)) {
+            // not a scripting-capable document - maybe a PDF?
+            return;
+          }
           suspiciousDomains.push(getDomain(tab.url));
         }));
 
-        let legitDomains = allowedGroups[tabDomain] || new Set([tabDomain]);
+        const legitDomains = allowedGroups[tabDomain] || new Set();
+        legitDomains.add(tabDomain);
+
         let otherDomains = new Set(suspiciousDomains.filter(d => d && !legitDomains.has(d)));
         if (otherDomains.size === 0) return; // no cross-site ties, no party
 
@@ -153,12 +212,19 @@ var TabGuard = (() => {
         let filterAuth = () => {
           requestHeaders = requestHeaders.filter(h => !AUTH_HEADERS_RX.test(h.name));
           debug("[TabGuard] Removing auth headers from %o (%o)", request, requestHeaders);
+          anonymizedTabs.set(tabId, {tabDomain, otherDomains: [...otherDomains]});
+          anonymizedRequests.add(request.id);
           return {requestHeaders};
         };
 
         let quietDomains = filteredGroups[tabDomain];
         if (mainFrame) {
-          let mustPrompt = (!quietDomains || [...otherDomains].some(d => !quietDomains.has(d)));
+          const promptOption = ns.sync.TabGuardPrompt;
+
+          const mustPrompt = promptOption !== "never" &&
+            (promptOption !== "post" || request.method === "POST") &&
+            (!quietDomains || [...otherDomains].some(d => !quietDomains.has(d)));
+
           if (mustPrompt) {
             return (async () => {
               let options = [
@@ -169,11 +235,12 @@ var TabGuard = (() => {
                 title: _("TabGuard_title"),
                 message: _("TabGuard_message", [tabDomain, [...otherDomains].join(", ")]),
                 options});
-              if (ret.button !== 0) return {cancel: true};
-              let list = ret.option === 0 ? filteredGroups : allowedGroups;
-              otherDomains.add(tabDomain);
-              for (let d of otherDomains) list[d] = otherDomains;
-              return list === filteredGroups ? filterAuth() : null;
+              if (ret.button !== 0) {
+                return {cancel: true};
+              }
+              const groups = ret.option === 0 ? filteredGroups : allowedGroups;
+              mergeGroups(groups, {tabDomain, otherDomains});
+              return groups === filteredGroups ? filterAuth() : null;
             })();
           }
         }
@@ -181,12 +248,47 @@ var TabGuard = (() => {
         return mustFilter ? filterAuth() : null;
       })();
     },
-    postCheck(request) {
+    // must be called from a webRequest.onHeadersReceived blocking listener
+    onReceive(request) {
+      if (!anonymizedRequests.has(request.id)) return false;
+      let headersModified = false;
+      let {responseHeaders} = request;
+      for (let j = responseHeaders.length; j-- > 0;) {
+        let h = responseHeaders[j];
+        if (h.name.toLowerCase() === "set-cookie") {
+          responseHeaders.splice(j, 1);
+          headersModified = true;
+        }
+      }
+      return headersModified;
+    },
+    // must be called after response headers have been processed or the load has been otherwise terminated
+    onCleanup(request) {
       let {requestId, tabId} = request;
       if (scheduledCuts.has(requestId)) {
         scheduledCuts.delete(requestId);
         TabTies.cut(tabId);
       }
+      anonymizedRequests.delete(request.id);
     },
+    isAnonymizedRequest(requestId) {
+      return anonymizedRequests.has(requestId);
+    },
+    isAnonymizedTab(tabId) {
+      return anonymizedTabs.has(tabId);
+    },
+    getAnonymizedTabInfo(tabId) {
+      // return a deep copy
+      return JSON.parse(JSON.stringify(anonymizedTabs.get(tabId)));
+    },
+    async reloadNormally(tabId) {
+      TabTies.cut(tabId);
+      await browser.tabs.reload(tabId);
+    },
+    allow(tabId) {
+      if (!TabGuard.isAnonymizedTab(tabId)) return;
+      const info = this.getAnonymizedTabInfo(tabId);
+      mergeGroups(allowedGroups, info);
+    }
   }
 })();

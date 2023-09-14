@@ -22,13 +22,15 @@ XSS.InjectionChecker = (async () => {
   await include([
     "/nscl/common/SyntaxChecker.js",
     "/nscl/common/Base64.js",
+    "/nscl/common/AsyncRegExp.js",
+    "/nscl/common/DebuggableRegExp.js",
+    "/nscl/common/RegExpCombo.js",
     "/nscl/common/Timing.js",
-    "/xss/FlashIdiocy.js",
     "/xss/ASPIdiocy.js",
     "/lib/he.js"]
   );
 
-  var {FlashIdiocy, ASPIdiocy} = XSS;
+  var {ASPIdiocy} = XSS;
 
   const wordCharRx = /\w/g;
 
@@ -83,6 +85,26 @@ XSS.InjectionChecker = (async () => {
       this.log = v ? this._log : function() {};
     },
 
+    _debugging: false,
+    get debugging() {
+      return this._debugging;
+    },
+    set debugging(b) {
+      this.logEnabled = b;
+
+      for (const rx of ["_maybeJSRx", "_riskyOperatorsRx"]) {
+        if (this[rx].originalRx) this[rx] = this[rx].originalRx;
+        if (b) {
+          this[rx] = new DebuggableRegExp(this[rx], rx => {
+            rx = new AsyncRegExp(rx);
+            // uncomment the following to unconditionally offload to the shared worker
+            // rx.forceRemote = true;
+            return rx;
+          });
+        }
+      }
+    },
+
     escalate: function(msg) {
       this.log(msg);
       log("[InjectionChecker] ", msg);
@@ -111,20 +133,20 @@ XSS.InjectionChecker = (async () => {
       return false;
     },
 
-    checkTemplates(script) {
+    async checkTemplates(script) {
       let templateExpressions = script.replace(/[[\]{}]/g, ";");
       return templateExpressions !== script &&
-        (this.maybeMavo(script) ||
-          (this.maybeJS(templateExpressions, true) &&
+        (await this.maybeMavo(script) ||
+          (await this.maybeJS(templateExpressions, true) &&
             (this.syntax.check(templateExpressions) ||
               /[^><=]=[^=]/.test(templateExpressions) && this.syntax.check(
                 templateExpressions.replace(/([^><=])=(?=[^=])/g, '$1=='))
             )));
     },
 
-    maybeMavo(s) {
+    async maybeMavo(s) {
       return /\[[^]*\([^]*\)[^]*\]/.test(s) && /\b(?:and|or|mod|\$url\b)/.test(s) &&
-        this.maybeJS(s.replace(/\b(?:and|or|mod|[[\]])/g, ',').replace(/\$url\b/g, 'location'), true);
+        await this.maybeJS(s.replace(/\b(?:and|or|mod|[[\]])/g, ',').replace(/\$url\b/g, 'location'), true);
     },
     get breakStops() {
       var def = "\\/\\?&#;\\s\\x00}<>"; // we stop on URL, JS and HTML delimiters
@@ -313,7 +335,7 @@ XSS.InjectionChecker = (async () => {
       "=[^]+\\[" + IC_EVAL_PATTERN + "\\W*\\]" // TODO: check if it can be coalesced into _maybeJSRx
     ),
 
-    _maybeJSRx: new RegExp(
+    _maybeJSRx: new AsyncRegExp(
       '(?:(?:\\[[^]+\\]|\\.\\D)[^;&/\'"]*(?:/[^]*|)' +
       '(?:\\([^]*\\)|[^]*`[^]+`|=[^=][^]*\\S)' +
       // double function call
@@ -346,7 +368,9 @@ XSS.InjectionChecker = (async () => {
     _arrayAccessRx: /\s*\[\d+\]/g,
 
     // inc/dec/self-modifying assignments on DOM props or special properties in object literals via Symbol
-    _riskyOperatorsRx: /(?:\+\+|--)\s*(?:\/[*/][\s\S]+)?(?:(?:\$|\w{3,})(?:\/[*/][\s\S]+)?(?:\[|\.\D)|location)|(?:\]|(?:\$|\w{3,})(?:\/[*/][\s\S]+)?\.[^]+|location)\s*(?:\/[*/][\s\S]+)?(\+\+|--|[+*\/<>~-]+\s*(?:\/[*/][\s\S]+)?=)|\{[^]*\[[^]*Symbol[^]*(?:\.\D|\[)[^]*:/,
+    _riskyOperatorsRx: new AsyncRegExp(
+      /(?:\+\+|--)\s*(?:\/[*/][\s\S]+)?(?:(?:\$|\w{3,})(?:\/[*/][\s\S]+)?(?:\[|\.\D)|location)|(?:\]|(?:\$|\w{3,})(?:\/[*/][\s\S]+)?\.[^]+|location)\s*(?:\/[*/][\s\S]+)?(\+\+|--|[+*\/<>~-]+\s*(?:\/[*/][\s\S]+)?=)|\{[^]*\[[^]*Symbol[^]*(?:\.\D|\[)[^]*:/
+    ),
 
     _assignmentRx: /^(?:[^()="'\s]+=(?:[^(='"\[+]+|[?a-zA-Z_0-9;,&=/]+|[\d.|]+))$/,
     _badRightHandRx: /=[\s\S]*(?:_QS_\b|[|.][\s\S]*source\b|<[\s\S]*\/[^>]*>)/,
@@ -355,12 +379,12 @@ XSS.InjectionChecker = (async () => {
     _openIdRx: /^scope=(?:\w+\+)\w/, // OpenID authentication scope parameter, see http://forums.informaction.com/viewtopic.php?p=69851#p69851
     _gmxRx: /\$\(clientName\)-\$\(dataCenter\)\.(\w+\.)+\w+/, // GMX webmail, see http://forums.informaction.com/viewtopic.php?p=69700#p69700
 
-    maybeJS(expr, mavoChecked = false) {
-      if (!mavoChecked && this.maybeMavo(expr)) return true;
+    async maybeJS(expr, mavoChecked = false) {
+      if (!mavoChecked && await this.maybeMavo(expr)) return true;
 
       if (/`[\s\S]*`/.test(expr) || // ES6 templates, extremely insidious!!!
         this._evalAliasingRx.test(expr) ||
-        this._riskyOperatorsRx.test(expr) // this must be checked before removing dots...
+        await this._riskyOperatorsRx.asyncTest(expr) // this must be checked before removing dots...
       ) return true;
 
       expr = // dotted URL components can lead to false positives, let's remove them
@@ -370,7 +394,7 @@ XSS.InjectionChecker = (async () => {
         .replace(/<!--/g, '') // remove HTML comments preamble (see next line)
         .replace(/(^(?:[^/?]*[=;.+-])?)\s*[\[(]+/g, '$1') // remove leading parens and braces
         .replace(this._openIdRx, '_OPENID_SCOPE_=XYZ')
-        .replace(/^[^=]*OPENid\.(\w+)=/gi, "OPENid_\1")
+        .replace(/^[^=]*OPENid\.(\w+)=/gi, "OPENid_$1")
         .replace(this._gmxRx, '_GMX_-_GMX_');
 
       if (expr.indexOf(")") !== -1) expr += ")"; // account for externally balanced parens
@@ -378,13 +402,13 @@ XSS.InjectionChecker = (async () => {
         return this._singleAssignmentRx.test(expr) || this._riskyAssignmentRx.test(expr) && this._nameRx.test(expr);
 
       return this._riskyParensRx.test(expr) ||
-        this._maybeJSRx.test(expr.replace(this._neutralDotsOrParensRx, '')) &&
+        await this._maybeJSRx.asyncTest(expr.replace(this._neutralDotsOrParensRx, '')) &&
         !this._wikiParensRx.test(expr);
 
     },
 
-    checkNonTrivialJSSyntax: function(expr) {
-      return this.maybeJS(this.reduceQuotes(expr)) && this.checkJSSyntax(expr);
+    async checkNonTrivialJSSyntax(expr) {
+      return await this.maybeJS(this.reduceQuotes(expr)) && this.checkJSSyntax(expr);
     },
 
 
@@ -478,14 +502,14 @@ XSS.InjectionChecker = (async () => {
       return res.join('');
     },
 
-    checkLastFunction: function() {
+    async checkLastFunction() {
       var fn = this.syntax.lastFunction;
       if (!fn) return false;
       var m = fn.toString().match(/\{([\s\S]*)\}/);
       if (!m) return false;
       var expr = this.stripLiteralsAndComments(m[1]);
       let ret =  /=[\s\S]*cookie|\b(?:setter|document|location|(?:inn|out)erHTML|\.\W*src)[\s\S]*=|[\w$\u0080-\uffff\)\]]\s*[\[\(]/.test(expr) ||
-        this.maybeJS(expr);
+        await this.maybeJS(expr);
       if (ret) {
         this.escalate(`${expr} has been flagged as dangerous JS (${RegExp.lastMatch})`);
       }
@@ -551,7 +575,7 @@ XSS.InjectionChecker = (async () => {
         s += ';' + s.match(/\*\/[\s\S]+/);
       }
 
-      if (!this.maybeJS(s)) return false;
+      if (!await this.maybeJS(s)) return false;
 
       const MAX_LOOPS = 1200;
 
@@ -589,7 +613,7 @@ XSS.InjectionChecker = (async () => {
         let breakSeq = m[1];
         let quote = breakSeq in this.breakStops ? breakSeq : '';
 
-        if (!this.maybeJS(quote ? quote + subj : subj)) {
+        if (!await this.maybeJS(quote ? quote + subj : subj)) {
           this.log("Fast escape on " + subj, iterations);
           return false;
         }
@@ -597,7 +621,7 @@ XSS.InjectionChecker = (async () => {
         let script = this.reduceURLs(subj);
 
         if (script.length < subj.length) {
-          if (!this.maybeJS(script)) {
+          if (!await this.maybeJS(script)) {
             this.log("Skipping to first nested URL in " + subj, iterations);
             injectionFinderRx.lastIndex += subj.indexOf("://") + 1;
             continue;
@@ -674,16 +698,16 @@ XSS.InjectionChecker = (async () => {
           }
 
           if (quote) {
-            if (this.checkNonTrivialJSSyntax(expr)) {
+            if (await this.checkNonTrivialJSSyntax(expr)) {
               this.log("Non-trivial JS inside quoted string detected", iterations);
               return true;
             }
             script = this.syntax.unquote(quote + expr, quote);
-            if (script && this.maybeJS(script) &&
-              (this.checkNonTrivialJSSyntax(script) ||
-                /'./.test(script) && this.checkNonTrivialJSSyntax("''" + script + "'") ||
-                /"./.test(script) && this.checkNonTrivialJSSyntax('""' + script + '"')
-              ) && this.checkLastFunction()
+            if (script && await this.maybeJS(script) &&
+              (await this.checkNonTrivialJSSyntax(script) ||
+                /'./.test(script) && await this.checkNonTrivialJSSyntax("''" + script + "'") ||
+                /"./.test(script) && await this.checkNonTrivialJSSyntax('""' + script + '"')
+              ) && await this.checkLastFunction()
             ) {
               this.log("JS quote Break Injection detected", iterations);
               return true;
@@ -703,14 +727,14 @@ XSS.InjectionChecker = (async () => {
             }
           }
 
-          if (this.maybeJS(this.reduceQuotes(script))) {
+          if (await this.maybeJS(this.reduceQuotes(script))) {
 
-            if (this.checkJSSyntax(script) && this.checkLastFunction()) {
+            if (this.checkJSSyntax(script) && await this.checkLastFunction()) {
               this.log("JS Break Injection detected", iterations);
               return true;
             }
 
-            if (this.checkTemplates(script)) {
+            if (await this.checkTemplates(script)) {
               this.log("JS template expression injection detected", iterations);
               return true;
             }
@@ -810,7 +834,7 @@ XSS.InjectionChecker = (async () => {
 
       this.syntax.lastFunction = null;
       let ret = await this.checkAttributes(s) ||
-        (/[\\\(]|=[^=]/.test(s) || this._riskyOperatorsRx.test(s)) && await this.checkJSBreak(s) || // MAIN
+        (/[\\\(]|=[^=]/.test(s) || await this._riskyOperatorsRx.asyncTest(s)) && await this.checkJSBreak(s) || // MAIN
         hasUnicodeEscapes && await this.checkJS(this.unescapeJS(s), true); // optional unescaped recursion
       if (ret) {
         let msg = "JavaScript Injection in " + s;
@@ -863,13 +887,20 @@ XSS.InjectionChecker = (async () => {
       return false;
     },
 
-    AttributesChecker: new RegExp(
-      "(?:\\W|^)(?:javascript:(?:[^]+[=\\\\\\(`\\[\\.<]|[^]*(?:\\bname\\b|\\\\[ux]\\d))|" +
-      "data:(?:(?:[a-z]\\w+/\\w[\\w+-]+\\w)?[;,]|[^]*;[^]*\\b(?:base64|charset=)|[^]*,[^]*<[^]*\\w[^]*>))|@" +
-      ("import\\W*(?:\\/\\*[^]*)?(?:[\"']|url[^]*\\()" +
-        "|-moz-binding[^]*:[^]*url[^]*\\(|\\{\\{[^]+\\}\\}")
-      .replace(/[a-rt-z\-]/g, "\\W*$&"),
-      "i"),
+    AttributesChecker: RegExp.combo(
+      /(?:\W|^)/i, // beginning or after non-space
+      '(?:',
+        // executable URLs
+        /javascript:(?:[^]+[=\\\(`\[\.<]|[^]*(?:\bname\b|\\[ux]\d))/,
+        /|data:(?:(?:[a-z]\w+\/\w[\w+-]+\w)?[;,]|[^]*;[^]*\b(?:base64|charset=)|[^]*,[^]*<[^]*\w[^]*>)/,
+      ')|',
+      // CSS injection
+      /@import\W*(?:\/\*[^]*)?(?:["']|url[^]*\()|-moz-binding[^]*:[^]*url[^]*\(/
+        .source.replace(/[@a-rt-z\-]/g, "\\W*$&"), // fuzzify keywords
+      // potential JS fragmentation in client-side template framework
+      /|(?:\{\{[^]*\S[^]*}}[^]*){2,}/
+    ),
+
     async checkAttributes(s) {
       s = this.reduceDashPlus(s);
       if (this._rxCheck("Attributes", s)) return true;
@@ -885,7 +916,7 @@ XSS.InjectionChecker = (async () => {
     GlobalsChecker: /https?:\/\/[\S\s]+["'\s\0](?:id|class|data-\w+)[\s\0]*=[\s\0]*("')?\w{3,}(?:[\s\0]|\1|$)|(?:id|class|data-\w+)[\s\0]*=[\s\0]*("')?\w{3,}(?:[\s\0]|\1)[\s\S]*["'\s\0]href[\s\0]*=[\s\0]*(?:"')?https?:\/\//i,
     HTMLChecker: new RegExp("<[^\\w<>]*(?:[^<>\"'\\s]*:)?[^\\w<>]*(?:" + // take in account quirks and namespaces
       fuzzify("script|form|style|svg|marquee|(?:link|object|embed|applet|param|i?frame|base|body|meta|ima?ge?|video|audio|bindings|set|isindex|animate|template") +
-      ")[^>\\w])|['\"\\s\\0/](?:style|innerhtml|data-bind|(?:data-)?mv-(?:\\w+[\\w-]*)|" + IC_EVENT_PATTERN +
+      ")[^>\\w][^>]+=)|['\"\\s\\0/](?:style|innerhtml|data-bind|(?:data-)?mv-(?:\\w+[\\w-]*)|" + IC_EVENT_PATTERN +
       ")[\\s\\0]*=|<%[^]+[=(][^]+%>", "i"),
 
     async checkHTML(s) {
@@ -934,7 +965,7 @@ XSS.InjectionChecker = (async () => {
         url = url.substring(0, hashPos);
       }
 
-      let parts = url.substring(0, hashPos).split(/[&;]/); // check query string
+      let parts = url.split(/[&;]/); // check query string
       for (let p of parts) {
         var pos = p.indexOf("=");
         if (pos > -1) p = p.substring(pos + 1);
@@ -1028,14 +1059,6 @@ XSS.InjectionChecker = (async () => {
           return true;
       } else if (ASPIdiocy.hasBadPercents(s) && await this.checkRecursive(ASPIdiocy.removeBadPercents(s), depth, isPost)) {
         return true;
-      }
-      if (FlashIdiocy.affects(s)) {
-        let purged = FlashIdiocy.purgeBadEncodings(s);
-        if (purged !== s && await this.checkRecursive(purged, depth, isPost))
-          return true;
-        let decoded = FlashIdiocy.platformDecode(purged);
-        if (decoded !== purged && await this.checkRecursive(decoded, depth, isPost))
-          return true;
       }
 
       if (!isPost && s.indexOf("coalesced:") !== 0) {

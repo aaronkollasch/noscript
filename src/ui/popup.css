@@ -141,6 +141,7 @@ html:not(.mobile) #scrollable {
 .hider-close, .reveal {
   -webkit-appearance: none;
   -moz-appearance: none;
+  appearance: none;
   border: none;
   border-radius: 0;
   background: transparent;

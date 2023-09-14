@@ -37,13 +37,12 @@ var Prompts = (() => {
     async open(data) {
       promptData = data;
       this.close();
-      let {width, height, left, top, parent = await browser.windows.getCurrent() } = data.features;
+      let {width, height, left, top, parent } = data.features;
       let options = {
         url: browser.runtime.getURL("ui/prompt.html"),
         type: "popup",
         width,
         height,
-        focused: false, // initially in the background while sizing
       };
       if (UA.isMozilla) {
         options.allowScriptsToClose = true;
@@ -53,7 +52,7 @@ var Prompts = (() => {
         this.currentTab = await browser.tabs.create({url: options.url});
         return;
       }
-
+      if (!parent) parent = await browser.windows.getCurrent()
       let popup = this.currentWindow = await browser.windows.create(options);
 
       if (parent) {
@@ -71,11 +70,15 @@ var Prompts = (() => {
       if (width && height && (popupWidth !== width || popupHeight !== height)) {
         left += Math.round((popupWidth - width) / 2);
         top += Math.round((popupHeight - height) / 2);
-      }
-
-      for (let attempts = 2; attempts-- > 0;) // position gets set only 2nd time, moz bug?
         await browser.windows.update(popup.id,
           {left, top, width, height, focused: false});
+      }
+
+      for (let attempts = 2; attempts-- > 0;) {
+        // position gets set only 2nd time, moz bug?
+        await browser.windows.update(popup.id,
+          {left, top, focused: false});
+      }
       if (parent) {
         await browser.windows.update(parent.id, {focused: true});
       }

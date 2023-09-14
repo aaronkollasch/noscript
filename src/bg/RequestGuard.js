@@ -169,7 +169,11 @@ var RequestGuard = (() => {
         let iconPath = (await Themes.isVintage()) ? '/img/vintage' : '/img';
         browserAction.setIcon({tabId, path: {64: `${iconPath}/ui-${icon}64.png`}});
       })();
-      browserAction.setBadgeText({tabId, text: showBadge ? numBlocked.toString() : ""});
+
+      browserAction.setBadgeText({
+        tabId,
+        text: TabGuard.isAnonymizedTab(tabId) ? "TG" : showBadge ? numBlocked.toString() : ""
+      });
       browserAction.setBadgeBackgroundColor({tabId, color: [128, 0, 0, 160]});
       browserAction.setTitle({tabId,
         title: UA.mobile ? "NoScript" : `${VERSION_LABEL} \n${enforced ?
@@ -595,7 +599,7 @@ var RequestGuard = (() => {
       if (pending && pending.redirected && pending.redirected.url === request.url) {
         return lanRes; // don't go on stripping cookies if we're in a redirection loop
       }
-      let chainNext = r => r === ABORT ? r : TabGuard.check(request);
+      let chainNext = r => r === ABORT ? r : TabGuard.onSend(request);
       return lanRes instanceof Promise ? lanRes.then(chainNext) : chainNext(lanRes);
     },
 
@@ -639,7 +643,6 @@ var RequestGuard = (() => {
       normalizeRequest(request);
       let result = ALLOW;
       let promises = [];
-      let headersModified = false;
 
       pending.headersProcessed = true;
       let {url, documentUrl, tabId, cookieStoreId, responseHeaders, type} = request;
@@ -664,6 +667,7 @@ var RequestGuard = (() => {
             capabilities && !capabilities.has("script"));
         }
         let header = csp.patchHeaders(responseHeaders, capabilities);
+        let headersModified = TabGuard.onReceive(request);
         /*
         // Uncomment me to disable networking-level CSP for debugging purposes
         header = null;
@@ -694,7 +698,7 @@ var RequestGuard = (() => {
       let {requestId, url, tabId, frameId, type} = request;
       if (type === "main_frame") {
         TabStatus.initTab(tabId);
-        TabGuard.postCheck(request);
+        TabGuard.onCleanup(request);
       }
       let scriptBlocked = request.responseHeaders.some(
         h => csp.isMine(h) && csp.blocks(h.value, "script")
@@ -727,11 +731,11 @@ var RequestGuard = (() => {
           }
         }
       }
-      TabGuard.postCheck(request);
+      TabGuard.onCleanup(request);
     },
     onErrorOccurred(request) {
       pendingRequests.delete(request.requestId);
-      TabGuard.postCheck(request);
+      TabGuard.onCleanup(request);
     }
   };
   function fakeRequestFromCSP(report, request) {

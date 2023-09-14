@@ -158,6 +158,7 @@ document.querySelector("#version").textContent = _("Version",
   });
 
   UI.wireChoice("TabGuardMode");
+  UI.wireChoice("TabGuardPrompt");
 
   document.querySelector("#tgForgetButton").onclick = e => {
     e.target.disabled = true;

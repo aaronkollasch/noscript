@@ -32,7 +32,18 @@
   let popupFor = tabId => `${popupURL}#tab${tabId}`;
 
   let ctxMenuId = "noscript-ctx-menu";
-
+  let menuShowing = false;
+  const menuUpdater = async (tabId) => {
+    if (!menuShowing) return;
+    try {
+      let badgeText = await browser.browserAction.getBadgeText({tabId});
+      let title = "NoScript";
+      if (badgeText) title = `${title} [${badgeText}]`;
+      await browser.contextMenus.update(ctxMenuId, {title});
+    } catch (e) {
+      // it might break in some load stages / with privileged page: don't spam the console
+    }
+  }
   async function toggleCtxMenuItem(show = ns.local.showCtxMenuItem) {
     if (!("contextMenus" in browser)) return;
     let id = ctxMenuId;
@@ -40,12 +51,16 @@
       await browser.contextMenus.remove(id);
     } catch (e) {}
 
-    if (show) {
+    if (menuShowing = show) {
       browser.contextMenus.create({
         id,
         title: "NoScript",
         contexts: ["all"]
       });
+      if (!browser.tabs.onUpdated.hasListener(menuUpdater)) {
+        browser.tabs.onUpdated.addListener(menuUpdater);
+        browser.tabs.onActivated.addListener(({tabId}) => menuUpdater(tabId));
+      }
     }
   }
 
@@ -179,6 +194,7 @@
       let contextStore = ns.contextStore.dry(true);
       let seen = tabId !== -1 ? await ns.collectSeen(tabId) : null;
       let xssUserChoices = await XSS.getUserChoices();
+      let anonymyzedTabInfo =
       await Messages.send("settings", {
         policy,
         contextStore,
@@ -189,6 +205,7 @@
         unrestrictedTab: ns.unrestrictedTabs.has(tabId),
         tabId,
         xssBlockedInTab: XSS.getBlockedInTab(tabId),
+        anonymyzedTabInfo: TabGuard.isAnonymizedTab(tabId) && TabGuard.getAnonymizedTabInfo(tabId),
       });
     },
 
@@ -251,6 +268,13 @@
         matchAboutBlank: true,
         allFrames: true,
       });
+    },
+
+    async reloadWithCredentials({tabId, remember}) {
+      if (remember) {
+        TabGuard.allow(tabId);
+      }
+      await TabGuard.reloadNormally(tabId);
     }
   };
 

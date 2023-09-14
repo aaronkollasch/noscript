@@ -8,7 +8,7 @@
       "strict_min_version": "59.0"
     }
   },
-  "version": "11.4.21",
+  "version": "11.4.27rc3",
   "description": "__MSG_Description__",
   "incognito": "spanning",
 
@@ -38,7 +38,7 @@
     "scripts": [
       "/nscl/lib/browser-polyfill.js",
       "/nscl/lib/punycode.js",
-      "/nscl/lib/sha256.js",
+      "/nscl/common/sha256.js",
       "/nscl/common/UA.js",
       "/nscl/common/uuid.js",
       "/nscl/common/SyncMessage.js",
@@ -91,7 +91,7 @@
       "all_frames": true,
       "js": [
         "/nscl/lib/browser-polyfill.js",
-        "/nscl/lib/sha256.js",
+        "/nscl/common/sha256.js",
         "/nscl/common/UA.js",
         "/nscl/common/uuid.js",
         "/nscl/common/log.js",
@@ -118,8 +118,10 @@
     {
       "run_at": "document_start",
       "matches": ["file://*/*", "ftp://*/*"],
+      "match_about_blank": true,
       "all_frames": true,
       "js": [
+        "/nscl/common/UA.js",
         "content/ftp.js",
         "lib/DocumentFreezer.js",
         "content/syncFetchPolicy.js"
