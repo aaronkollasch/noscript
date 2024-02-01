@@ -70,14 +70,6 @@ LIB="$SRC/lib"
 
 NSCL="$SRC/nscl"
 
-# install html5_events.pl dependencies if needed
-cpan Regexp::List List::MoreUtils
-if ./html5_events/html5_events.pl; then
-  # update full event list as an array in src/lib/DocumentFreezer.js
-  EVENTS=$(ggrep '^on[a-z]\+$' html5_events/html5_events_archive.txt | gsed "s/^on//;s/.*/'&'/;H;1h;"'$!d;x;s/\n/, /g');
-  perl -pi -e 's/(\bconst eventTypes\s*=\s*)\[.*?\]/$1\['"$EVENTS"'\]/' src/lib/DocumentFreezer.js
-fi
-
 rm -rf "$BUILD" "$XPI"
 cp -pR "$SRC" "$BUILD"
 

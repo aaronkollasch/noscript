@@ -8,7 +8,14 @@
       "strict_min_version": "59.0"
     }
   },
-  "version": "11.4.27rc3",
+  "browser_specific_settings": {
+    "gecko": {
+      "id":  "{73a6fe31-595d-460b-a920-fcc0f8843232}",
+      "strict_min_version": "59.0"
+    },
+    "gecko_android": {}
+  },
+  "version": "11.4.29",
   "description": "__MSG_Description__",
   "incognito": "spanning",
 
@@ -76,15 +83,6 @@
 
   "content_scripts": [
     {
-       "matches": ["<all_urls>"],
-       "match_about_blank": true,
-       "all_frames": true,
-       "css": [
-         "/common/themes.css",
-         "/content/content.css"
-       ]
-    },
-    {
       "run_at": "document_start",
       "matches": ["<all_urls>"],
       "match_about_blank": true,
@@ -123,7 +121,7 @@
       "js": [
         "/nscl/common/UA.js",
         "content/ftp.js",
-        "lib/DocumentFreezer.js",
+        "/nscl/content/DocumentFreezer.js",
         "content/syncFetchPolicy.js"
       ]
     }
@@ -155,6 +153,14 @@
         "default": "Alt+Shift+Space",
         "windows": "Alt+Shift+Comma"
       }
-    }
+    },
+    "tempTrustPage": {
+      "description": "__MSG_TempTrustPage__"
+    },
+    "revokeTemp": {
+      "description": "__MSG_RevokeTemp__"
+    },
+
+    "_execute_browser_action": {}
   }
 }

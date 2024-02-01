@@ -108,7 +108,7 @@
       XSS.stop();
     }
 
-    Messages.addHandler(messageHandler);
+
 
     try {
       await Messages.send("started");
@@ -244,22 +244,19 @@
         type: "panel"
       });
     },
-    async getTheme() {
+    async getTheme(msg, {tab, frameId}) {
+      try {
+        browser.tabs.insertCSS(tab.id, {
+          code: await Themes.getContentCSS(),
+          frameId,
+          runAt: "document_start",
+          matchAboutBlank: true,
+          cssOrigin: "user",
+        });
+      } catch (e) {
+        console.error(e);
+      }
       return (await Themes.isVintage()) ? "vintage" : "";
-    },
-    async fetchResource({url}) {
-      url = browser.runtime.getURL(url);
-      const blob = await (await fetch(url)).blob();
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = e => {
-          resolve(reader.result);
-        };
-        reader.onerror = e => {
-          reject(reader.error);
-        };
-        reader.readAsDataURL(blob);
-      });
     },
 
     async promptHook(msg, {tabId}) {
@@ -277,6 +274,7 @@
       await TabGuard.reloadNormally(tabId);
     }
   };
+  Messages.addHandler(messageHandler);
 
   function onSyncMessage(msg, sender) {
     switch(msg.id) {
