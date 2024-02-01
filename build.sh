@@ -20,7 +20,7 @@ strip_rc_ver() {
   perl -pi.bak -e "$replace" "$MANIFEST" && rm -f "$MANIFEST".bak
 }
 
-VER=$(grep '"version":' "$MANIFEST_IN" | gsed -re 's/.*": "(.*?)".*/\1/')
+VER=$(ggrep '"version":' "$MANIFEST_IN" | gsed -re 's/.*": "(.*?)".*/\1/')
 if [ "$1" == "tag" ]; then
   echo "Tagging at $VER"
   git tag -a "$VER" -e -m"$(gitcl 2>/dev/null)"
@@ -91,12 +91,12 @@ if [[ $VER == *rc* ]]; then
     BUILD_OPTS=""
   fi
 else
-  grep -v '"update_url":' "$MANIFEST_IN" > "$MANIFEST_OUT"
+  ggrep -v '"update_url":' "$MANIFEST_IN" > "$MANIFEST_OUT"
   if [[ "$1" == "sign" ]]; then
     echo >&2 "WARNING: won't auto-sign a release version, please manually upload to AMO."
   fi
 fi
-if ! grep '"id":' "$MANIFEST_OUT" >/dev/null; then
+if ! ggrep '"id":' "$MANIFEST_OUT" >/dev/null; then
   echo >&2 "Cannot build manifest.json"
   exit 1
 fi
@@ -136,7 +136,7 @@ if [ -f "$SIGNED" ]; then
   mv "$SIGNED" "$XPI.xpi"
 elif [ -f "$XPI.zip" ]; then
   SIGNED=""
-  if unzip -l "$XPI.xpi" | grep "META-INF/mozilla.rsa" >/dev/null 2>&1; then
+  if unzip -l "$XPI.xpi" | ggrep "META-INF/mozilla.rsa" >/dev/null 2>&1; then
     echo "A signed $XPI.xpi already exists, not overwriting."
   else
     [[ "$VER" == *rc* ]] && xpicmd="mv" || xpicmd="cp"
@@ -161,7 +161,7 @@ strip_rc_ver "$MANIFEST_OUT"
 # manifest.json patching for Chromium:
 
 EXTRA_PERMS=""
-if grep 'patchWorkers.js' "$MANIFEST_OUT" >/dev/null 2>&1; then
+if ggrep 'patchWorkers.js' "$MANIFEST_OUT" >/dev/null 2>&1; then
   EXTRA_PERMS='"debugger",'
 fi
 
@@ -169,9 +169,9 @@ fi
 (ggrep -B1000 '"name": "NoScript"' "$MANIFEST_OUT"; \
   ggrep -A2000 '"version":' "$MANIFEST_OUT") | \
   # auto-update URL for the Edge version on the Microsoft Store
-  sed -e '/"name":/a\' -e '  "update_url": "'$EDGE_UPDATE_URL'",' | \
+  gsed -e '/"name":/a\' -e '  "update_url": "'$EDGE_UPDATE_URL'",' | \
   # skip embeddingDocument.js and dns permission
-  grep -Pv 'content/embeddingDocument.js|"dns",' | \
+  ggrep -Pv 'content/embeddingDocument.js|"dns",' | \
   # add "debugger" permission for patchWorkers.js
   gsed -re 's/( *)"webRequestBlocking",/&\n\1'"$EXTRA_PERMS"'/' | \
   # add origin fallback for content scripts
@@ -179,12 +179,12 @@ fi
   "$MANIFEST_OUT".tmp && \
   mv "$MANIFEST_OUT.tmp" "$MANIFEST_OUT"
 
-CHROME_ZIP=$(build | grep 'ready: .*\.zip' | gsed -re 's/.* ready: //')
+CHROME_ZIP=$(build | ggrep 'ready: .*\.zip' | gsed -re 's/.* ready: //')
 
 if [ -f "$CHROME_ZIP" ]; then
   mv "$CHROME_ZIP" "$XPI$DBG-edge.zip"
   # remove Edge-specific manifest lines and package for generic Chromium
-  grep -v '"update_url":' "$MANIFEST_OUT" > "$MANIFEST_OUT.tmp" && \
+  ggrep -v '"update_url":' "$MANIFEST_OUT" > "$MANIFEST_OUT.tmp" && \
     mv "$MANIFEST_OUT.tmp" "$MANIFEST_OUT" && \
     build
     mv "$CHROME_ZIP" "$XPI$DBG-chrome.zip"
