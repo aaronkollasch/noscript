@@ -20,7 +20,7 @@ strip_rc_ver() {
   perl -pi.bak -e "$replace" "$MANIFEST" && rm -f "$MANIFEST".bak
 }
 
-VER=$(grep '"version":' "$MANIFEST_IN" | sed -re 's/.*": "(.*?)".*/\1/')
+VER=$(ggrep '"version":' "$MANIFEST_IN" | gsed -re 's/.*": "(.*?)".*/\1/')
 if [ "$1" == "tag" ]; then
   echo "Tagging at $VER"
   git tag -a "$VER" -e -m"$(gitcl 2>/dev/null)"
@@ -65,7 +65,7 @@ if [[ "$1" == "bump" ]]; then
   exit
 fi
 XPI_DIR="$BASE/xpi"
-XPI="$XPI_DIR/noscript-$VER"
+XPI="$XPI_DIR/noscript_aaronkollasch_fork_-$VER"
 LIB="$SRC/lib"
 
 NSCL="$SRC/nscl"
@@ -84,19 +84,19 @@ CHROMIUM_BUILD_CMD="$BUILD_CMD"
 CHROMIUM_BUILD_OPTS="$BUILD_OPTS"
 
 if [[ $VER == *rc* ]]; then
-  sed -re 's/^(\s+)"strict_min_version":.*$/\1"update_url": "https:\/\/secure.informaction.com\/update\/?v='$VER'",\n\0/' \
+  gsed -re 's/^(\s+)"strict_min_version":.*$/\1"update_url": "https:\/\/secure.informaction.com\/update\/?v='$VER'",\n\0/' \
     "$MANIFEST_IN" > "$MANIFEST_OUT"
   if [[ "$1" == "sign" ]]; then
     BUILD_CMD="$BASE/../../we-sign"
     BUILD_OPTS=""
   fi
 else
-  grep -v '"update_url":' "$MANIFEST_IN" > "$MANIFEST_OUT"
+  ggrep -v '"update_url":' "$MANIFEST_IN" > "$MANIFEST_OUT"
   if [[ "$1" == "sign" ]]; then
     echo >&2 "WARNING: won't auto-sign a release version, please manually upload to AMO."
   fi
 fi
-if ! grep '"id":' "$MANIFEST_OUT" >/dev/null; then
+if ! ggrep '"id":' "$MANIFEST_OUT" >/dev/null; then
   echo >&2 "Cannot build manifest.json"
   exit 1
 fi
@@ -104,8 +104,8 @@ fi
 if [ "$1" != "debug" ]; then
   DBG=""
   for file in "$SRC"/content/*.js; do
-    if grep -P '\/\/\s(REL|DEV)_ONLY' "$file" >/dev/null; then
-      sed -re 's/\s*\/\/\s*(\S.*)\s*\/\/\s*REL_ONLY.*/\1/' -e 's/.*\/\/\s*DEV_ONLY.*//' "$file" > "$BUILD/content/$(basename "$file")"
+    if ggrep -P '\/\/\s(REL|DEV)_ONLY' "$file" >/dev/null; then
+      gsed -re 's/\s*\/\/\s*(\S.*)\s*\/\/\s*REL_ONLY.*/\1/' -e 's/.*\/\/\s*DEV_ONLY.*//' "$file" > "$BUILD/content/$(basename "$file")"
     fi
   done
 else
@@ -136,7 +136,7 @@ if [ -f "$SIGNED" ]; then
   mv "$SIGNED" "$XPI.xpi"
 elif [ -f "$XPI.zip" ]; then
   SIGNED=""
-  if unzip -l "$XPI.xpi" | grep "META-INF/mozilla.rsa" >/dev/null 2>&1; then
+  if unzip -l "$XPI.xpi" | ggrep "META-INF/mozilla.rsa" >/dev/null 2>&1; then
     echo "A signed $XPI.xpi already exists, not overwriting."
   else
     [[ "$VER" == *rc* ]] && xpicmd="mv" || xpicmd="cp"
@@ -161,30 +161,30 @@ strip_rc_ver "$MANIFEST_OUT"
 # manifest.json patching for Chromium:
 
 EXTRA_PERMS=""
-if grep 'patchWorkers.js' "$MANIFEST_OUT" >/dev/null 2>&1; then
+if ggrep 'patchWorkers.js' "$MANIFEST_OUT" >/dev/null 2>&1; then
   EXTRA_PERMS='"debugger",'
 fi
 
 # skip "application" manifest key
-(grep -B1000 '"name": "NoScript"' "$MANIFEST_OUT"; \
-  grep -A2000 '"version":' "$MANIFEST_OUT") | \
+(ggrep -B1000 '"name": "NoScript"' "$MANIFEST_OUT"; \
+  ggrep -A2000 '"version":' "$MANIFEST_OUT") | \
   # auto-update URL for the Edge version on the Microsoft Store
-  sed -e '/"name":/a\' -e '  "update_url": "'$EDGE_UPDATE_URL'",' | \
+  gsed -e '/"name":/a\' -e '  "update_url": "'$EDGE_UPDATE_URL'",' | \
   # skip embeddingDocument.js and dns permission
-  grep -Pv 'content/embeddingDocument.js|"dns",' | \
+  ggrep -Pv 'content/embeddingDocument.js|"dns",' | \
   # add "debugger" permission for patchWorkers.js
-  sed -re 's/( *)"webRequestBlocking",/&\n\1'"$EXTRA_PERMS"'/' | \
+  gsed -re 's/( *)"webRequestBlocking",/&\n\1'"$EXTRA_PERMS"'/' | \
   # add origin fallback for content scripts
-  sed -re 's/( *)"match_about_blank": *true/\1"match_origin_as_fallback": true,\n&/' > \
+  gsed -re 's/( *)"match_about_blank": *true/\1"match_origin_as_fallback": true,\n&/' > \
   "$MANIFEST_OUT".tmp && \
   mv "$MANIFEST_OUT.tmp" "$MANIFEST_OUT"
 
-CHROME_ZIP=$(build | grep 'ready: .*\.zip' | sed -re 's/.* ready: //')
+CHROME_ZIP=$(build | ggrep 'ready: .*\.zip' | gsed -re 's/.* ready: //')
 
 if [ -f "$CHROME_ZIP" ]; then
   mv "$CHROME_ZIP" "$XPI$DBG-edge.zip"
   # remove Edge-specific manifest lines and package for generic Chromium
-  grep -v '"update_url":' "$MANIFEST_OUT" > "$MANIFEST_OUT.tmp" && \
+  ggrep -v '"update_url":' "$MANIFEST_OUT" > "$MANIFEST_OUT.tmp" && \
     mv "$MANIFEST_OUT.tmp" "$MANIFEST_OUT" && \
     build
     mv "$CHROME_ZIP" "$XPI$DBG-chrome.zip"
