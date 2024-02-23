@@ -49,7 +49,7 @@ strip_rc_ver() {
 }
 
 ver_from_manifest() {
-  grep '"version":' "$1" | sed -re 's/.*": "(.*?)".*/\1/'
+  ggrep '"version":' "$1" | gsed -re 's/.*": "(.*?)".*/\1/'
 }
 
 update_releases() {
@@ -119,10 +119,10 @@ if [[ $1 == "bump" ]]; then
   fi
   # try to add first manifest.json hunk, tentatively containing "version": ...
   INTERACTIVE=
-  git diff --cached "$MANIFEST_IN" | grep '^[+-]  *"version":' \
+  git diff --cached "$MANIFEST_IN" | ggrep '^[+-]  *"version":' \
      || echo -e "s\ns\ny\nq" | git add -p "$MANIFEST_IN" >/dev/null 2>&1
   # check whether the commit would contain more than just the version bump
-  while git diff --cached "$MANIFEST_IN" | grep '^[+-] ' | grep -v '"version":'; do
+  while git diff --cached "$MANIFEST_IN" | ggrep '^[+-] ' | ggrep -v '"version":'; do
     echo "Cannot commit the bump to $VER, please cleanup $MANIFEST_IN first."
     git restore --staged "$MANIFEST_IN"
     [[ $INTERACTIVE ]] && exit 1
@@ -141,7 +141,7 @@ if [[ $1 == "bump" ]]; then
   exit
 fi
 XPI_DIR="$BASE/xpi"
-XPI="$XPI_DIR/noscript-${VER}"
+XPI="$XPI_DIR/noscript_aaronkollasch_fork_-${VER}"
 
 rm -rf "$BUILD" "$XPI"
 cp -pR "$SRC" "$BUILD"
@@ -165,8 +165,8 @@ fi
 if [ "$1" != "debug" ]; then
   DBG=""
   for file in "$BUILD"/**/*.js "$BUILD"/nscl/**/*.js; do
-    if grep -P '\/\/\s(REL|DEV)_ONLY' "$file" >/dev/null; then
-      sed -i -r -e 's/\s*\/\/\s*(\S.*)\s*\/\/\s*REL_ONLY.*/\1/' -e 's/.*\/\/\s*DEV_ONLY.*//' "$file"
+    if ggrep -P '\/\/\s(REL|DEV)_ONLY' "$file" >/dev/null; then
+      gsed -i -r -e 's/\s*\/\/\s*(\S.*)\s*\/\/\s*REL_ONLY.*/\1/' -e 's/.*\/\/\s*DEV_ONLY.*//' "$file"
     fi
   done
 else
@@ -179,7 +179,7 @@ UNPACKED_BASE="$BASE/unpacked"
 mkdir -p "$UNPACKED_BASE"
 
 if ! [[ $UNPACKED_ONLY ]]; then
-  if [[ $(git status -s  | grep ' src/' | grep -v ' src/manifest.json') ]]; then
+  if [[ $(git status -s  | ggrep ' src/' | ggrep -v ' src/manifest.json') ]]; then
     echo "Please build packages only on a clean tree!" >&2
     git status
     exit 7
@@ -188,7 +188,7 @@ if ! [[ $UNPACKED_ONLY ]]; then
   mkdir -p "$XPI_DIR"
   "$BASE/html5_events/html5_events.pl" >"$BASE/html5_events/last_run.log" 2>&1
   IC_FILE="$SRC/xss/InjectionChecker.js"
-  if git diff "$IC_FILE" | grep IC_EVENT_PATTERN >/dev/null; then
+  if git diff "$IC_FILE" | ggrep IC_EVENT_PATTERN >/dev/null; then
     git commit -m'[XSS] Updated IC_EVENT_PATTERN.' "$IC_FILE" "$BASE/html5_events/"
   fi
 fi
@@ -197,7 +197,7 @@ CYGPATH=$(which cypath)
 COMMON_BUILD_OPTS="--ignore-files='test/**' 'embargoed/**' content/experiments.js"
 
 is_signed() {
-  [ -f "$1" ] && ( unzip -l "$1" | grep "META-INF/mozilla.rsa" ) >/dev/null 2>&1;
+  [ -f "$1" ] && ( unzip -l "$1" | ggrep "META-INF/mozilla.rsa" ) >/dev/null 2>&1;
 }
 
 fix_manifest() {
@@ -209,7 +209,7 @@ build() {
     shift
   elif ! [[ $BUILD_CMD == *we-sign ]]; then
     build zip "$1" | \
-      grep 'ready: .*\.zip' | sed -re 's/.* ready: //'
+      ggrep 'ready: .*\.zip' | gsed -re 's/.* ready: //'
     return
   fi
 
@@ -300,7 +300,7 @@ if [[ $SIGNED ]] && ! [[ $UNPACKED_ONLY ]] && ! [[ $DBG ]]; then
   "$0" tag quiet
   nscl
   "$BASE/../../we-publish" "$XPI.xpi" && update_releases
-  if ! grep 'Patching ' "$BASE/html5_events/last_run.log" 2>&1; then
+  if ! ggrep 'Patching ' "$BASE/html5_events/last_run.log" 2>&1; then
     echo "WARNING - last IC_EVENT_PATTERN generation run log:" >&2
     cat "$BASE/html5_events/last_run.log" >&2
   fi
