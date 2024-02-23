@@ -18,6 +18,10 @@ xpi
 # auto-generated files
 TLD/tld.js
 TLD/tld_template.js
+src/.web-extension-id
 # local utilities
 art
 utils
+node_modules
+# other
+.DS_Store
