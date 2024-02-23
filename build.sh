@@ -35,7 +35,7 @@ strip_rc_ver() {
   perl -pi.bak -e "$replace" "$MANIFEST" && rm -f "$MANIFEST".bak
 }
 
-VER=$(grep '"version":' "$MANIFEST_IN" | sed -re 's/.*": "(.*?)".*/\1/')
+VER=$(ggrep '"version":' "$MANIFEST_IN" | gsed -re 's/.*": "(.*?)".*/\1/')
 if [ "$1" == "tag" ]; then
   # ensure nscl is up-to-date git-wise
   ./nscl_gitsync.sh
@@ -80,10 +80,10 @@ if [[ "$1" == "bump" ]]; then
   fi
   # try to add first manifest.json hunk, tentatively containing "version": ...
   INTERACTIVE=
-  git diff --cached "$MANIFEST_IN" | grep '^[+-]  *"version":' \
+  git diff --cached "$MANIFEST_IN" | ggrep '^[+-]  *"version":' \
      || echo -e "s\ns\ny\nq" | git add -p "$MANIFEST_IN" >/dev/null 2>&1
   # check whether the commit would contain more than just the version bump
-  while git diff --cached "$MANIFEST_IN" | grep '^[+-] ' | grep -v '"version":'; do
+  while git diff --cached "$MANIFEST_IN" | ggrep '^[+-] ' | ggrep -v '"version":'; do
     echo "Cannot commit the bump to $VER, please cleanup $MANIFEST_IN first."
     git restore --staged "$MANIFEST_IN"
     [[ $INTERACTIVE ]] && exit 1
@@ -101,7 +101,7 @@ if [[ "$1" == "bump" ]]; then
   exit
 fi
 XPI_DIR="$BASE/xpi"
-XPI="$XPI_DIR/noscript-$VER"
+XPI="$XPI_DIR/noscript_aaronkollasch_fork_-$VER"
 LIB="$SRC/lib"
 
 NSCL="$SRC/nscl"
@@ -125,8 +125,8 @@ fi
 if [ "$1" != "debug" ]; then
   DBG=""
   for file in "$BUILD"/**/*.js "$BUILD"/nscl/**/*.js; do
-    if grep -P '\/\/\s(REL|DEV)_ONLY' "$file" >/dev/null; then
-      sed -i -r -e 's/\s*\/\/\s*(\S.*)\s*\/\/\s*REL_ONLY.*/\1/' -e 's/.*\/\/\s*DEV_ONLY.*//' "$file"
+    if ggrep -P '\/\/\s(REL|DEV)_ONLY' "$file" >/dev/null; then
+      gsed -i -r -e 's/\s*\/\/\s*(\S.*)\s*\/\/\s*REL_ONLY.*/\1/' -e 's/.*\/\/\s*DEV_ONLY.*//' "$file"
     fi
   done
 else
@@ -153,7 +153,7 @@ build() {
     shift
   elif ! [[ $BUILD_CMD == *we-sign ]]; then
     build zip "$1" | \
-      grep 'ready: .*\.zip' | sed -re 's/.* ready: //'
+      ggrep 'ready: .*\.zip' | gsed -re 's/.* ready: //'
     return
   fi
   UNPACKED_DIR="$UNPACKED_BASE/${1:-out}"
@@ -188,7 +188,7 @@ SIGNED="$XPI_DIR/noscript_security_suite-$VER-an+fx.xpi"
 if [ -f "$SIGNED" ]; then
   mv "$SIGNED" "$XPI.xpi"
 elif [ -f "$XPI.zip" ]; then
-  if unzip -l "$XPI.xpi" | grep "META-INF/mozilla.rsa" >/dev/null 2>&1; then
+  if unzip -l "$XPI.xpi" | ggrep "META-INF/mozilla.rsa" >/dev/null 2>&1; then
     echo "A signed $XPI.xpi already exists, not overwriting."
   else
     unset SIGNED

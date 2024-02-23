@@ -1,15 +1,15 @@
 {
   "manifest_version": 3,
   "default_locale": "en",
-  "name": "NoScript",
+  "name": "NoScript (aaronkollasch fork)",
   "browser_specific_settings": {
     "gecko": {
-      "id":  "{73a6fe31-595d-460b-a920-fcc0f8843232}",
+      "id":  "@aaronk-noscript",
       "strict_min_version": "115.0"
     },
     "gecko_android": {}
   },
-  "version": "13.4.905",
+  "version": "13.4.905.1",
   "description": "__MSG_Description__",
   "incognito": "spanning",
 
